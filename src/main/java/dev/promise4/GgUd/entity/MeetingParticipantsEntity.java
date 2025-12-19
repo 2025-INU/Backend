@@ -14,16 +14,13 @@ import java.time.LocalDateTime;
  * 약속 초대, 수락/거절, 출발지 정보 관리
  */
 @Entity
-@Table(name = "meeting_participants",
-    uniqueConstraints = {
-        @UniqueConstraint(name = "unique_meeting_user", columnNames = {"meeting_id", "user_id"})
-    },
-    indexes = {
+@Table(name = "meeting_participants", uniqueConstraints = {
+        @UniqueConstraint(name = "unique_meeting_user", columnNames = { "meeting_id", "user_id" })
+}, indexes = {
         @Index(name = "idx_participants_meeting_id", columnList = "meeting_id"),
         @Index(name = "idx_participants_user_id", columnList = "user_id"),
         @Index(name = "idx_participants_status", columnList = "invitation_status")
-    }
-)
+})
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
@@ -43,7 +40,7 @@ public class MeetingParticipantsEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private UsersEntity user;
+    private User user;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "invitation_status", nullable = false, length = 20)

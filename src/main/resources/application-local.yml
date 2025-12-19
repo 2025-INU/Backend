@@ -1,0 +1,23 @@
+# ===================================
+# Local Development Profile
+# ===================================
+
+spring:
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+
+  devtools:
+    restart:
+      enabled: true
+    livereload:
+      enabled: true
+
+logging:
+  level:
+    dev.promise4.GgUd: DEBUG
+
+app:
+  cors:
+    allowed-origins: http://localhost:3000,http://localhost:3001

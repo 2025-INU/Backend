@@ -1,0 +1,135 @@
+package dev.promise4.GgUd.security.oauth;
+
+import dev.promise4.GgUd.entity.User;
+import dev.promise4.GgUd.entity.UserRole;
+import dev.promise4.GgUd.repository.UserRepository;
+import dev.promise4.GgUd.security.oauth.dto.KakaoTokenResponse;
+import dev.promise4.GgUd.security.oauth.dto.KakaoUserInfo;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestClient;
+
+import java.util.UUID;
+
+/**
+ * 카카오 OAuth2 로그인 서비스
+ */
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class KakaoOAuthService {
+
+    private final KakaoOAuthProperties kakaoProperties;
+    private final UserRepository userRepository;
+    private final RestClient restClient;
+
+    /**
+     * 카카오 로그인 URL 생성
+     * 
+     * @return 카카오 로그인 페이지 URL과 state 값
+     */
+    public KakaoLoginUrlResponse getKakaoLoginUrl() {
+        String state = UUID.randomUUID().toString();
+        String loginUrl = kakaoProperties.buildAuthorizationUrl(state);
+        return new KakaoLoginUrlResponse(loginUrl, state);
+    }
+
+    /**
+     * 카카오 로그인 처리
+     * 
+     * @param code 인가 코드
+     * @return 로그인된 사용자 정보
+     */
+    @Transactional
+    public User processKakaoLogin(String code) {
+        // 1. 인가 코드로 액세스 토큰 요청
+        KakaoTokenResponse tokenResponse = requestAccessToken(code);
+        log.debug("Kakao access token received");
+
+        // 2. 액세스 토큰으로 사용자 정보 요청
+        KakaoUserInfo userInfo = requestUserInfo(tokenResponse.getAccessToken());
+        log.debug("Kakao user info received: kakaoId={}", userInfo.getKakaoId());
+
+        // 3. 사용자 정보로 회원 조회 또는 신규 가입
+        return findOrCreateUser(userInfo);
+    }
+
+    /**
+     * 인가 코드로 액세스 토큰 요청
+     */
+    private KakaoTokenResponse requestAccessToken(String code) {
+        MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+        formData.add("grant_type", "authorization_code");
+        formData.add("client_id", kakaoProperties.getClientId());
+        formData.add("client_secret", kakaoProperties.getClientSecret());
+        formData.add("redirect_uri", kakaoProperties.getRedirectUri());
+        formData.add("code", code);
+
+        return restClient.post()
+                .uri(kakaoProperties.getTokenUri())
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .body(formData)
+                .retrieve()
+                .body(KakaoTokenResponse.class);
+    }
+
+    /**
+     * 액세스 토큰으로 사용자 정보 요청
+     */
+    private KakaoUserInfo requestUserInfo(String accessToken) {
+        return restClient.get()
+                .uri(kakaoProperties.getUserInfoUri())
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                .retrieve()
+                .body(KakaoUserInfo.class);
+    }
+
+    /**
+     * 카카오 ID로 기존 사용자 조회 또는 신규 생성
+     */
+    private User findOrCreateUser(KakaoUserInfo userInfo) {
+        // 닉네임이 없는 경우 기본값 설정
+        String nickname = userInfo.getNickname();
+        if (nickname == null || nickname.isBlank()) {
+            nickname = "카카오유저_" + userInfo.getKakaoId();
+            log.warn("Nickname is null for kakaoId={}, using default: {}", userInfo.getKakaoId(), nickname);
+        }
+
+        String finalNickname = nickname;
+
+        return userRepository.findByKakaoId(userInfo.getKakaoId())
+                .map(existingUser -> {
+                    // 기존 사용자: 프로필 정보 업데이트
+                    existingUser.updateProfile(
+                            finalNickname,
+                            userInfo.getEmail(),
+                            userInfo.getProfileImageUrl());
+                    log.info("Existing user logged in: kakaoId={}", userInfo.getKakaoId());
+                    return existingUser;
+                })
+                .orElseGet(() -> {
+                    // 신규 사용자: 회원 가입
+                    User newUser = User.builder()
+                            .kakaoId(userInfo.getKakaoId())
+                            .nickname(finalNickname)
+                            .email(userInfo.getEmail())
+                            .profileImageUrl(userInfo.getProfileImageUrl())
+                            .role(UserRole.USER)
+                            .build();
+                    log.info("New user registered: kakaoId={}", userInfo.getKakaoId());
+                    return userRepository.save(newUser);
+                });
+    }
+
+    /**
+     * 카카오 로그인 URL 응답 DTO
+     */
+    public record KakaoLoginUrlResponse(String loginUrl, String state) {
+    }
+}

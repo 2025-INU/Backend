@@ -1,0 +1,81 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Gradle
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+gradle-wrapper.properties
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.project
+.classpath
+.settings/
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Logs
+logs/
+*.log
+
+# Test
+src/test/
+*.test.js
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Docker
+docker-compose*.yml
+compose.yaml
+Dockerfile*
+.dockerignore
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Build artifacts
+target/
+out/
+dist/
+
+# Node (if using frontend in same repo)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Database
+*.db
+*.sqlite
+
+# Coverage reports
+coverage/
+*.coverage
+.nyc_output/
+
+# Other
+.cache/
+*.pid
+*.seed
+*.pid.lock

@@ -14,8 +14,8 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "expense_records", indexes = {
-    @Index(name = "idx_expense_meeting_user", columnList = "meeting_id, user_id"),
-    @Index(name = "idx_expense_meeting", columnList = "meeting_id")
+        @Index(name = "idx_expense_meeting_user", columnList = "meeting_id, user_id"),
+        @Index(name = "idx_expense_meeting", columnList = "meeting_id")
 })
 @EntityListeners(AuditingEntityListener.class)
 @Getter
@@ -36,7 +36,7 @@ public class ExpenseRecordsEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private UsersEntity user;
+    private User user;
 
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;

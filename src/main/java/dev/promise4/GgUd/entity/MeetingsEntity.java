@@ -17,9 +17,9 @@ import java.util.List;
  */
 @Entity
 @Table(name = "meetings", indexes = {
-    @Index(name = "idx_meetings_creator_id", columnList = "creator_id"),
-    @Index(name = "idx_meetings_status", columnList = "status"),
-    @Index(name = "idx_meetings_datetime", columnList = "meeting_datetime")
+        @Index(name = "idx_meetings_creator_id", columnList = "creator_id"),
+        @Index(name = "idx_meetings_status", columnList = "status"),
+        @Index(name = "idx_meetings_datetime", columnList = "meeting_datetime")
 })
 @EntityListeners(AuditingEntityListener.class)
 @Getter
@@ -36,7 +36,7 @@ public class MeetingsEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "creator_id", nullable = false)
-    private UsersEntity creator;
+    private User creator;
 
     @Column(name = "meeting_name", nullable = false, length = 100)
     private String meetingName;
