@@ -45,3 +45,6 @@ DOCKER_SETUP.md
 ggud.md
 HELP.md
 CLAUDE.md
+.DS_Store
+.dockerignore
+.gitattributes
