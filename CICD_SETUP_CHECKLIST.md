@@ -312,6 +312,8 @@ sudo netstat -tlnp | grep 8080
 ## 5단계: GitHub Actions 워크플로우 테스트
 
 ### 5.1 CI 워크플로우 테스트
+
+**Git 작업 (수동):**
 ```bash
 # feature 브랜치 생성
 git checkout -b feature/test-ci
@@ -323,34 +325,32 @@ git commit -m "test: CI workflow test"
 git push origin feature/test-ci
 ```
 
-**GitHub에서:**
-1. Pull Request 생성 (feature/test-ci → develop)
-2. Actions 탭에서 CI 워크플로우 실행 확인
+**GitHub 작업 (수동):**
+1. GitHub에서 Pull Request 생성 (feature/test-ci → main)
+2. Actions 탭에서 CI 워크플로우 자동 실행 확인
 3. 테스트 통과 확인
 
 **체크:**
 - [ ] CI 워크플로우 자동 실행
 - [ ] 빌드 성공
 - [ ] 테스트 통과
-- [ ] PR에 결과 코멘트 생성
 
-### 5.2 CD 워크플로우 테스트 (수동)
-```bash
-# GitHub에서 수동 실행
-# Repository → Actions → "CD - Production Deployment" → Run workflow
-```
+### 5.2 CD 워크플로우 테스트
+
+**GitHub Actions에서 수동 실행:**
+1. Repository → Actions 탭
+2. "CD - Production Deployment" 선택
+3. "Run workflow" 버튼 클릭
 
 **모니터링:**
 1. Build Job 완료 확인
 2. Deploy Job 실행 확인
 3. Health Check 통과 확인
-4. Verify Job 완료 확인
 
 **체크:**
 - [ ] Build Job 성공
 - [ ] Deploy Job 성공
 - [ ] Health Check 통과
-- [ ] Verify Job 성공
 - [ ] 프로덕션 애플리케이션 정상 동작
 
 ### 5.3 Health Check 워크플로우 테스트
@@ -368,28 +368,36 @@ git push origin feature/test-ci
 
 ---
 
-## 6단계: 자동 배포 플로우 테스트
+## 6단계: 전체 배포 플로우 테스트
 
-### 6.1 develop 브랜치 배포
+### 6.1 feature → main PR 생성 (수동)
+
+**Git 작업:**
 ```bash
-git checkout develop
-git merge feature/test-ci
-git push origin develop
+# feature 브랜치에서 작업 완료 후
+git add .
+git commit -m "feat: test deployment flow"
+git push origin feature/test-ci
 ```
+
+**GitHub 작업:**
+1. GitHub에서 Pull Request 생성 (feature/test-ci → main)
+2. CI 워크플로우 자동 실행 확인
+3. 테스트 통과 확인
 
 **체크:**
 - [ ] CI 워크플로우 자동 실행
-- [ ] 테스트 통과
+- [ ] 빌드 및 테스트 통과
 
-### 6.2 main 브랜치 배포 (프로덕션)
-```bash
-# Pull Request 생성 (develop → main)
-# GitHub에서 리뷰 및 승인
-# 머지 후 자동 배포 확인
-```
+### 6.2 main 브랜치 배포 (자동)
+
+**GitHub 작업:**
+1. PR 승인 및 Merge 버튼 클릭 (수동)
+2. CD 워크플로우 자동 실행 확인
+3. 배포 완료 확인
 
 **체크:**
-- [ ] main 브랜치 푸시 시 CD 자동 실행
+- [ ] PR Merge 후 CD 자동 실행
 - [ ] 프로덕션 배포 성공
 - [ ] Health Check 통과
 - [ ] 애플리케이션 정상 동작

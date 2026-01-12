@@ -100,14 +100,19 @@ vim /opt/ggud/config/application-prod.yml
 
 ### 3. 첫 배포 실행
 
+**방법 1: main 브랜치로 push (수동 작업 → 자동 배포)**
 ```bash
-# 1. main 브랜치로 푸시 (자동 배포)
+# Git 작업 (수동)
 git checkout main
 git merge develop
 git push origin main
 
-# 또는 수동 배포
-# GitHub → Actions → "CD - Production Deployment" → Run workflow
+# → CD 워크플로우 자동 실행
+```
+
+**방법 2: GitHub Actions에서 수동 트리거**
+```
+GitHub → Actions → "CD - Production Deployment" → Run workflow
 ```
 
 ---
@@ -116,22 +121,27 @@ git push origin main
 
 ### 개발 플로우
 ```
-feature 브랜치 개발
-    ↓
-develop 브랜치 PR (CI 실행)
-    ↓
-코드 리뷰 & 테스트 확인
-    ↓
-develop 머지
-    ↓
-main 브랜치 PR (CI 실행)
-    ↓
-최종 승인
-    ↓
-main 머지 (CD 자동 실행)
-    ↓
-프로덕션 배포 완료
+feature 브랜치 개발 (수동)
+    ↓ git push (수동)
+Pull Request 생성 (수동: feature → main)
+    ↓ CI 자동 실행
+CI 빌드/테스트 통과 확인 (수동)
+    ↓ PR Merge (수동)
+main 브랜치에 머지 완료
+    ↓ CD 자동 실행
+AWS 배포 완료
 ```
+
+### 사용자 수행 작업 (수동)
+- ✋ feature 브랜치에서 코드 작성
+- ✋ git add, commit, push
+- ✋ GitHub에서 Pull Request 생성
+- ✋ CI 결과 확인
+- ✋ PR 승인 및 Merge
+
+### 자동 실행 작업
+- ⚙️ CI: PR 생성 시 자동 실행 (빌드/테스트)
+- ⚙️ CD: main 브랜치 merge 시 자동 실행 (AWS 배포)
 
 ### 배포 프로세스
 ```

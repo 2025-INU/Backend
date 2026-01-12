@@ -161,16 +161,19 @@ ai:
 
 ---
 
-### 3단계: 첫 배포 (3분)
+### 3단계: 첫 배포
 
-#### 방법 1: main 브랜치 푸시 (자동 배포)
+#### 방법 1: main 브랜치로 push하여 자동 배포
+main 브랜치에 push하면 CD 워크플로우가 자동으로 실행됩니다.
+
 ```bash
+# 수동으로 실행
 git checkout main
 git merge develop
 git push origin main
 ```
 
-#### 방법 2: GitHub Actions 수동 실행
+#### 방법 2: GitHub Actions에서 수동으로 워크플로우 실행
 1. GitHub Repository 페이지 이동
 2. **Actions** 탭 클릭
 3. **CD - Production Deployment** 선택
@@ -215,25 +218,35 @@ sudo netstat -tlnp | grep 8080
 
 ## 🔄 일상적인 배포 플로우
 
+### Git 작업 (수동)
 ```bash
 # 1. feature 브랜치에서 작업
 git checkout -b feature/new-feature
 # ... 코드 작성 ...
+git add .
 git commit -m "feat: add new feature"
 git push origin feature/new-feature
+```
 
-# 2. GitHub에서 PR 생성 (feature → develop)
-# CI가 자동으로 실행되어 테스트
+### GitHub 작업 (수동)
+```
+# 2. GitHub에서 Pull Request 생성
+#    feature → main
+#    → CI가 자동으로 실행되어 빌드/테스트 수행
 
-# 3. PR 승인 및 머지
+# 3. CI 통과 확인 후 PR 승인 및 Merge
+#    → CD가 자동으로 실행되어 AWS에 배포
+```
 
-# 4. develop에서 충분히 테스트 후 main으로 PR
-git checkout main
-git pull origin main
-# GitHub에서 PR 생성 (develop → main)
-
-# 5. PR 승인 및 머지
-# CD가 자동으로 실행되어 프로덕션 배포
+### 요약
+```
+feature 브랜치 개발 (수동)
+    ↓ git push (수동)
+Pull Request 생성 (수동)
+    ↓ CI 자동 실행
+CI 통과 확인 (수동)
+    ↓ PR Merge (수동)
+CD 자동 실행 → AWS 배포
 ```
 
 ---
