@@ -36,15 +36,12 @@ out/
 ### VS Code ###
 .vscode/
 
-database-schema.md
-
 .env
 
-claude 2.md
-DOCKER_SETUP.md
-ggud.md
-HELP.md
-CLAUDE.md
+# Ignore all markdown files except root README.md
+*.md
+**/*.md
+!/README.md
 
 .dockerignore
 .gitattributes
