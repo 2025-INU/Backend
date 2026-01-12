@@ -1,0 +1,73 @@
+name: CI - Build and Test
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+  push:
+    branches: [ develop, 'feature/**' ]
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: ${{ secrets.DB_USERNAME }}
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          POSTGRES_DB: ggud_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        command: redis-server --requirepass ${{ secrets.REDIS_PASSWORD }}
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build with Gradle
+        run: ./gradlew clean build
+        env:
+          SPRING_PROFILES_ACTIVE: test
+
+          # Database (PostgreSQL)
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/ggud_db
+          SPRING_DATASOURCE_USERNAME: ${{ secrets.DB_USERNAME }}
+          SPRING_DATASOURCE_PASSWORD: ${{ secrets.DB_PASSWORD }}
+
+          # Redis (Cache)
+          SPRING_DATA_REDIS_HOST: localhost
+          SPRING_DATA_REDIS_PORT: 6379
+          SPRING_DATA_REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+
+          # Security & JWT
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+
+          # Kakao API
+          KAKAO_REST_API_KEY: ${{ secrets.KAKAO_REST_API_KEY }}
+          KAKAO_JAVASCRIPT_KEY: ${{ secrets.KAKAO_JAVASCRIPT_KEY }}
+          KAKAO_REDIRECT_URI: ${{ secrets.KAKAO_REDIRECT_URI }}
+
+          # External Services
+          AI_SERVER_URL: ${{ secrets.AI_SERVER_URL }}

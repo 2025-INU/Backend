@@ -4,6 +4,7 @@ import dev.promise4.GgUd.controller.dto.*;
 import dev.promise4.GgUd.entity.*;
 import dev.promise4.GgUd.repository.ParticipantRepository;
 import dev.promise4.GgUd.repository.PromiseRepository;
+import dev.promise4.GgUd.repository.SubwayStationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -12,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /**
- * 중간지점 추천 서비스
+ * 중간지점 추천 및 확정 서비스
  */
 @Slf4j
 @Service
@@ -21,6 +22,7 @@ public class MidpointService {
 
     private final PromiseRepository promiseRepository;
     private final ParticipantRepository participantRepository;
+    private final SubwayStationRepository subwayStationRepository;
     private final MidpointCalculationService midpointCalculationService;
 
     /**
@@ -69,5 +71,32 @@ public class MidpointService {
                 .recommendedStations(recommendations)
                 .participantCount(participants.size())
                 .build();
+    }
+
+    /**
+     * 중간지점 확정 (호스트만)
+     */
+    @Transactional
+    public void confirmMidpoint(Long promiseId, Long userId, Long stationId) {
+        Promise promise = promiseRepository.findById(promiseId)
+                .orElseThrow(() -> new IllegalArgumentException("약속을 찾을 수 없습니다"));
+
+        // 호스트 확인
+        if (!promise.getHost().getId().equals(userId)) {
+            throw new IllegalStateException("호스트만 확정할 수 있습니다");
+        }
+
+        if (promise.getStatus() != PromiseStatus.SELECTING_MIDPOINT) {
+            throw new IllegalStateException("확정 가능한 단계가 아닙니다");
+        }
+
+        SubwayStation station = subwayStationRepository.findById(stationId)
+                .orElseThrow(() -> new IllegalArgumentException("역을 찾을 수 없습니다"));
+
+        // 확정
+        promise.confirmLocation(station.getLatitude(), station.getLongitude(), station.getStationName());
+
+        log.info("Midpoint confirmed: promiseId={}, stationId={}, stationName={}",
+                promiseId, stationId, station.getStationName());
     }
 }
