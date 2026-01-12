@@ -38,9 +38,10 @@ out/
 
 .env
 
-# Ignore all markdown files except README.md
+# Ignore all markdown files except root README.md
 *.md
-!README.md
+**/*.md
+!/README.md
 
 .dockerignore
 .gitattributes
