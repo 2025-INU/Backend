@@ -2,7 +2,6 @@ package dev.promise4.GgUd.controller;
 
 import dev.promise4.GgUd.controller.dto.*;
 import dev.promise4.GgUd.service.MidpointService;
-import dev.promise4.GgUd.service.VoteService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -18,17 +17,16 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * 중간지점 추천 및 투표 API 컨트롤러
+ * 중간지점 추천 및 확정 API 컨트롤러
  */
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/promises/{promiseId}/midpoint")
 @RequiredArgsConstructor
-@Tag(name = "Midpoint", description = "중간지점 추천/투표 API")
+@Tag(name = "Midpoint", description = "중간지점 추천/확정 API")
 public class MidpointController {
 
     private final MidpointService midpointService;
-    private final VoteService voteService;
 
     /**
      * 중간지점 추천 조회
@@ -49,44 +47,6 @@ public class MidpointController {
     }
 
     /**
-     * 투표하기
-     */
-    @PostMapping("/vote")
-    @Operation(summary = "중간지점 투표", description = "원하는 역에 투표합니다. 한 사람당 한 표만 가능하며, 다시 투표하면 변경됩니다.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "투표 성공", content = @Content(schema = @Schema(implementation = VoteResponse.class))),
-            @ApiResponse(responseCode = "400", description = "잘못된 상태 또는 역"),
-            @ApiResponse(responseCode = "401", description = "인증 필요")
-    })
-    public ResponseEntity<VoteResponse> vote(
-            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
-            @PathVariable Long promiseId,
-            @Valid @RequestBody VoteRequest request) {
-
-        log.debug("POST /api/v1/promises/{}/midpoint/vote - userId: {}, stationId: {}",
-                promiseId, userId, request.getStationId());
-        VoteResponse response = voteService.vote(promiseId, userId, request.getStationId());
-        return ResponseEntity.ok(response);
-    }
-
-    /**
-     * 투표 현황 조회
-     */
-    @GetMapping("/votes")
-    @Operation(summary = "투표 현황 조회", description = "현재 투표 현황을 조회합니다.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "조회 성공", content = @Content(schema = @Schema(implementation = VoteSummaryResponse.class))),
-            @ApiResponse(responseCode = "401", description = "인증 필요")
-    })
-    public ResponseEntity<VoteSummaryResponse> getVotes(
-            @PathVariable Long promiseId) {
-
-        log.debug("GET /api/v1/promises/{}/midpoint/votes", promiseId);
-        VoteSummaryResponse response = voteService.getVoteSummary(promiseId);
-        return ResponseEntity.ok(response);
-    }
-
-    /**
      * 중간지점 확정 (호스트만)
      */
     @PostMapping("/confirm")
@@ -100,11 +60,11 @@ public class MidpointController {
     public ResponseEntity<Void> confirmMidpoint(
             @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @PathVariable Long promiseId,
-            @Valid @RequestBody VoteRequest request) {
+            @Valid @RequestBody ConfirmMidpointRequest request) {
 
         log.debug("POST /api/v1/promises/{}/midpoint/confirm - userId: {}, stationId: {}",
                 promiseId, userId, request.getStationId());
-        voteService.confirmMidpoint(promiseId, userId, request.getStationId());
+        midpointService.confirmMidpoint(promiseId, userId, request.getStationId());
         return ResponseEntity.ok().build();
     }
 }

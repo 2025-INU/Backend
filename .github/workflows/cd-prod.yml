@@ -1,0 +1,136 @@
+name: CD - Production Deployment (Docker)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:  # 수동 트리거 가능
+
+env:
+  DOCKER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/ggud-backend
+  DEPLOY_PATH: /opt/ggud
+  COMPOSE_FILE: docker-compose.yml
+
+jobs:
+  build-and-push:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extract version from commit
+        id: version
+        run: |
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+          echo "tag=${SHORT_SHA}" >> $GITHUB_OUTPUT
+          echo "date=$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ env.DOCKER_IMAGE }}:latest
+            ${{ env.DOCKER_IMAGE }}:${{ steps.version.outputs.tag }}
+            ${{ env.DOCKER_IMAGE }}:${{ steps.version.outputs.date }}
+          cache-from: type=registry,ref=${{ env.DOCKER_IMAGE }}:buildcache
+          cache-to: type=registry,ref=${{ env.DOCKER_IMAGE }}:buildcache,mode=max
+
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/deploy_key.pem
+          chmod 600 ~/.ssh/deploy_key.pem
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Create deployment directories
+        run: |
+          ssh -i ~/.ssh/deploy_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            sudo mkdir -p ${{ env.DEPLOY_PATH }}/{data/{postgres,redis},logs,backups/{postgres,redis}}
+            sudo chown -R ${{ secrets.EC2_USER }}:${{ secrets.EC2_USER }} ${{ env.DEPLOY_PATH }}
+          EOF
+
+      - name: Transfer docker-compose file
+        run: |
+          scp -i ~/.ssh/deploy_key.pem -o StrictHostKeyChecking=no \
+            ${{ env.COMPOSE_FILE }} \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${{ env.DEPLOY_PATH }}/
+
+      - name: Create .env file on EC2
+        run: |
+          ssh -i ~/.ssh/deploy_key.pem -o StrictHostKeyChecking=no \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            cat > ${{ env.DEPLOY_PATH }}/.env << 'ENVEOF'
+          # Docker
+          DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
+          IMAGE_TAG=latest
+
+          # Database
+          DB_USERNAME=${{ secrets.DB_USERNAME }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+
+          # Redis
+          REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
+
+          # JWT
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+
+          # Kakao API
+          KAKAO_REST_API_KEY=${{ secrets.KAKAO_REST_API_KEY }}
+          KAKAO_JAVASCRIPT_KEY=${{ secrets.KAKAO_JAVASCRIPT_KEY }}
+          KAKAO_REDIRECT_URI=${{ secrets.KAKAO_REDIRECT_URI }}
+
+          # AI Server
+          AI_SERVER_URL=${{ secrets.AI_SERVER_URL }}
+          ENVEOF
+            chmod 600 ${{ env.DEPLOY_PATH }}/.env
+          EOF
+
+      - name: Pull and deploy with Docker Compose
+        run: |
+          ssh -i ~/.ssh/deploy_key.pem -o StrictHostKeyChecking=no \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            cd ${{ env.DEPLOY_PATH }}
+
+            # Docker Hub 로그인
+            echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+            # 최신 이미지 pull
+            docker pull ${{ env.DOCKER_IMAGE }}:latest
+
+            # 기존 컨테이너 중지 및 제거
+            docker-compose -f ${{ env.COMPOSE_FILE }} down || true
+
+            # 새 컨테이너 시작
+            docker-compose -f ${{ env.COMPOSE_FILE }} up -d
+
+            # 로그아웃
+            docker logout
+          EOF
+
+      - name: Cleanup old Docker images
+        run: |
+          ssh -i ~/.ssh/deploy_key.pem -o StrictHostKeyChecking=no \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
+            "docker image prune -af --filter 'until=168h' || true"
