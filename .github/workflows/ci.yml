@@ -15,14 +15,20 @@ jobs:
       postgres:
         image: postgres:15-alpine
         env:
-          POSTGRES_DB: ggud_test
-          POSTGRES_USER: test_user
-          POSTGRES_PASSWORD: test_password
+          POSTGRES_USER: ${{ secrets.DB_USERNAME }}
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          POSTGRES_DB: ggud_db
         ports:
           - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
       redis:
         image: redis:7-alpine
+        command: redis-server --requirepass ${{ secrets.REDIS_PASSWORD }}
         ports:
           - 6379:6379
 
@@ -40,22 +46,28 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Cache Gradle packages
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
       - name: Build with Gradle
         run: ./gradlew clean build
         env:
           SPRING_PROFILES_ACTIVE: test
-          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/ggud_test
-          SPRING_DATASOURCE_USERNAME: test_user
-          SPRING_DATASOURCE_PASSWORD: test_password
+
+          # Database (PostgreSQL)
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/ggud_db
+          SPRING_DATASOURCE_USERNAME: ${{ secrets.DB_USERNAME }}
+          SPRING_DATASOURCE_PASSWORD: ${{ secrets.DB_PASSWORD }}
+
+          # Redis (Cache)
           SPRING_DATA_REDIS_HOST: localhost
           SPRING_DATA_REDIS_PORT: 6379
+          SPRING_DATA_REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+
+          # Security & JWT
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+
+          # Kakao API
+          KAKAO_REST_API_KEY: ${{ secrets.KAKAO_REST_API_KEY }}
+          KAKAO_JAVASCRIPT_KEY: ${{ secrets.KAKAO_JAVASCRIPT_KEY }}
+          KAKAO_REDIRECT_URI: ${{ secrets.KAKAO_REDIRECT_URI }}
+
+          # External Services
+          AI_SERVER_URL: ${{ secrets.AI_SERVER_URL }}
