@@ -28,9 +28,13 @@ jobs:
 
       redis:
         image: redis:7-alpine
-        command: redis-server --requirepass ${{ secrets.REDIS_PASSWORD }}
         ports:
           - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - name: Checkout code
