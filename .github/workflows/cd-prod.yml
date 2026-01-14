@@ -100,8 +100,9 @@ jobs:
           # JWT
           JWT_SECRET=${{ secrets.JWT_SECRET }}
 
-          # Kakao API (Secrets 이름에 맞춤)
+          # Kakao API
           KAKAO_REST_API_KEY=${{ secrets.KAKAO_REST_API_KEY }}
+          KAKAO_CLIENT_SECRET=${{ secrets.KAKAO_CLIENT_SECRET }}
           KAKAO_JAVASCRIPT_KEY=${{ secrets.KAKAO_JAVASCRIPT_KEY }}
           KAKAO_REDIRECT_URI=${{ secrets.KAKAO_REDIRECT_URI }}
 
