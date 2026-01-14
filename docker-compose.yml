@@ -17,7 +17,7 @@ services:
       - SPRING_PROFILES_ACTIVE=prod
 
       # Database Configuration
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/ggud_prod
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/ggud_db
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
@@ -90,7 +90,7 @@ services:
     environment:
       - POSTGRES_USER=${DB_USERNAME}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - POSTGRES_DB=ggud_prod
+      - POSTGRES_DB=ggud_db
       - TZ=Asia/Seoul
       - PGDATA=/var/lib/postgresql/data/pgdata
     volumes:
@@ -101,7 +101,7 @@ services:
       - ggud-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ggud_prod"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ggud_db"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -186,5 +186,3 @@ networks:
   ggud-network:
     driver: bridge
 
-# Production에서는 named volumes 대신 bind mounts 사용
-# 백업 및 데이터 관리 용이

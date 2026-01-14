@@ -3,6 +3,8 @@ name: CD - Production Deployment (Docker)
 on:
   push:
     branches: [ main ] # main 브랜치 푸시 시 자동 배포
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:  # 필요 시 수동으로도 실행 가능
 
 env:
