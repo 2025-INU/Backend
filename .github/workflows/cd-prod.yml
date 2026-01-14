@@ -1,20 +1,12 @@
-name: CD - Production Deployment (Docker)
+name: CD - Production Deployment
 
 on:
   push:
-    branches: [ main ] # main 브랜치 푸시 시 자동 배포
-  pull_request:
     branches: [ main ]
-  workflow_dispatch:  # 필요 시 수동으로도 실행 가능
-
-env:
-  DOCKER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/ggud-backend
-  DEPLOY_PATH: /opt/ggud
-  COMPOSE_FILE: docker-compose.yml
+  workflow_dispatch:  # 수동 실행 가능
 
 jobs:
-  build-and-push:
-    name: Build and Push Docker Image
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -47,96 +39,20 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile
           push: true
-          tags: ${{ env.DOCKER_IMAGE }}:latest
-          cache-from: type=registry,ref=${{ env.DOCKER_IMAGE }}:buildcache
-          cache-to: type=registry,ref=${{ env.DOCKER_IMAGE }}:buildcache,mode=max
+          tags: ${{ secrets.DOCKER_USERNAME }}/ggud-backend:latest
 
-  deploy:
-    name: Deploy to EC2
-    runs-on: ubuntu-latest
-    needs: build-and-push # 빌드 완료 후 실행
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup SSH key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/deploy_key.pem
-          chmod 600 ~/.ssh/deploy_key.pem
-          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
-
-      - name: Create deployment directories
-        run: |
-          ssh -i ~/.ssh/deploy_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-            sudo mkdir -p ${{ env.DEPLOY_PATH }}/app
-            sudo mkdir -p ${{ env.DEPLOY_PATH }}/config
-            sudo mkdir -p ${{ env.DEPLOY_PATH }}/backups
-            sudo mkdir -p /var/log/ggud
-            sudo chown -R ${{ secrets.EC2_USER }}:${{ secrets.EC2_USER }} ${{ env.DEPLOY_PATH }}
-            sudo chown -R ${{ secrets.EC2_USER }}:${{ secrets.EC2_USER }} /var/log/ggud
-          EOF
-
-      - name: Transfer docker-compose file
-        run: |
-          scp -i ~/.ssh/deploy_key.pem -o StrictHostKeyChecking=no \
-            ${{ env.COMPOSE_FILE }} \
-            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${{ env.DEPLOY_PATH }}/
-
-      - name: Create .env file on EC2
-        run: |
-          ssh -i ~/.ssh/deploy_key.pem -o StrictHostKeyChecking=no \
-            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-            cat > ${{ env.DEPLOY_PATH }}/.env << 'ENVEOF'
-          # Database & Redis
-          DB_USERNAME=${{ secrets.DB_USERNAME }}
-          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-          POSTGRES_DB=ggud_db
-          REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
-
-          # JWT
-          JWT_SECRET=${{ secrets.JWT_SECRET }}
-
-          # Kakao API
-          KAKAO_REST_API_KEY=${{ secrets.KAKAO_REST_API_KEY }}
-          KAKAO_CLIENT_SECRET=${{ secrets.KAKAO_CLIENT_SECRET }}
-          KAKAO_JAVASCRIPT_KEY=${{ secrets.KAKAO_JAVASCRIPT_KEY }}
-          KAKAO_REDIRECT_URI=${{ secrets.KAKAO_REDIRECT_URI }}
-
-          # AI Server
-          AI_SERVER_URL=${{ secrets.AI_SERVER_URL }}
-          ENVEOF
-            chmod 600 ${{ env.DEPLOY_PATH }}/.env
-          EOF
-
-      - name: Pull and deploy with Docker Compose
-        run: |
-          ssh -i ~/.ssh/deploy_key.pem -o StrictHostKeyChecking=no \
-            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-            cd ${{ env.DEPLOY_PATH }}
-            echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-            docker compose pull # V2 명령어 사용
-            docker compose down --remove-orphans
-            docker compose up -d
-            docker logout
-          EOF
-
-      - name: Health Check
-        run: |
-          ssh -i ~/.ssh/deploy_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-            echo "Starting health check..."
-            for i in {1..20}; do
-              # Spring Boot Actuator를 활용한 헬스 체크
-              if curl -s http://localhost:8080/actuator/health | grep '"status":"UP"'; then
-                echo "Deployment Successful! Application is UP."
-                exit 0
-              fi
-              echo "Waiting for application to be ready... ($i/20)"
-              sleep 10
-            done
-            echo "Health check failed! Check logs with 'docker compose logs'."
-            exit 1
-          EOF
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /opt/ggud
+            docker compose pull
+            docker compose up -d --force-recreate
+            docker system prune -af
+            echo "Waiting for application to start..."
+            sleep 30
+            curl -s http://localhost:8080/actuator/health || echo "Health check pending..."
