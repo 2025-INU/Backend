@@ -23,11 +23,18 @@ public class JwtTokenProvider {
 
     public JwtTokenProvider(JwtProperties jwtProperties) {
         this.jwtProperties = jwtProperties;
-        // 비밀 키가 충분히 길지 않으면 패딩 추가
         String secret = jwtProperties.getSecret();
-        if (secret == null || secret.length() < 32) {
-            secret = "default-secret-key-for-development-only-change-in-production!!";
+
+        // JWT 시크릿 검증 - 미설정 또는 불충분한 길이 시 애플리케이션 시작 실패
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalStateException(
+                "JWT secret is not configured. Please set JWT_SECRET environment variable.");
         }
+        if (secret.length() < 32) {
+            throw new IllegalStateException(
+                "JWT secret must be at least 32 characters for security. Current length: " + secret.length());
+        }
+
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
