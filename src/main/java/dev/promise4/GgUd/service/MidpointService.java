@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
@@ -24,6 +26,7 @@ public class MidpointService {
     private final ParticipantRepository participantRepository;
     private final SubwayStationRepository subwayStationRepository;
     private final MidpointCalculationService midpointCalculationService;
+    private final KakaoDirectionsService kakaoDirectionsService;
 
     /**
      * 중간지점 추천 조회
@@ -40,14 +43,17 @@ public class MidpointService {
 
         // 참여자 출발지 목록
         List<Participant> participants = participantRepository.findByPromiseId(promiseId);
-        List<Coordinate> departures = participants.stream()
+        List<Participant> participantsWithLocation = participants.stream()
                 .filter(Participant::isLocationSubmitted)
-                .map(p -> Coordinate.of(p.getDepartureLatitude(), p.getDepartureLongitude()))
                 .toList();
 
-        if (departures.isEmpty()) {
+        if (participantsWithLocation.isEmpty()) {
             throw new IllegalStateException("출발지를 입력한 참여자가 없습니다");
         }
+
+        List<Coordinate> departures = participantsWithLocation.stream()
+                .map(p -> Coordinate.of(p.getDepartureLatitude(), p.getDepartureLongitude()))
+                .toList();
 
         // 중간지점 계산
         Coordinate midpoint = midpointCalculationService.calculateMidpoint(departures);
@@ -55,12 +61,17 @@ public class MidpointService {
         // 가까운 역 5개 찾기
         List<StationDistance> nearestStations = midpointCalculationService.findNearestStations(midpoint, 5);
 
-        // 추천 결과 생성
+        // 추천 결과 생성 (카카오 API로 이동시간 조회)
         List<StationRecommendation> recommendations = nearestStations.stream()
-                .map(sd -> StationRecommendation.from(
-                        sd.getStation(),
-                        sd.getDistanceKm(),
-                        midpointCalculationService.calculateAverageDistance(sd.getStation(), departures)))
+                .map(sd -> {
+                    List<ParticipantTravelInfo> travelInfos = getTravelInfosForStation(
+                            sd.getStation(), participantsWithLocation);
+                    return StationRecommendation.from(
+                            sd.getStation(),
+                            sd.getDistanceKm(),
+                            midpointCalculationService.calculateAverageDistance(sd.getStation(), departures),
+                            travelInfos);
+                })
                 .toList();
 
         log.info("Midpoint recommendations generated: promiseId={}, midpoint=({}, {}), stationCount={}",
@@ -71,6 +82,48 @@ public class MidpointService {
                 .recommendedStations(recommendations)
                 .participantCount(participants.size())
                 .build();
+    }
+
+    /**
+     * 특정 역까지 각 참여자의 이동 정보 조회 (카카오 API)
+     */
+    private List<ParticipantTravelInfo> getTravelInfosForStation(SubwayStation station, List<Participant> participants) {
+        Coordinate destination = Coordinate.of(station.getLatitude(), station.getLongitude());
+
+        // 모든 참여자에 대해 병렬로 카카오 API 호출
+        List<Mono<ParticipantTravelInfo>> travelInfoMonos = participants.stream()
+                .map(participant -> {
+                    Coordinate origin = Coordinate.of(
+                            participant.getDepartureLatitude(),
+                            participant.getDepartureLongitude());
+
+                    return kakaoDirectionsService.getDirections(origin, destination)
+                            .map(directions -> ParticipantTravelInfo.builder()
+                                    .userId(participant.getUser().getId())
+                                    .nickname(participant.getUser().getNickname())
+                                    .departureAddress(participant.getDepartureAddress())
+                                    .travelTimeMinutes(directions.getTotalDuration())
+                                    .distanceMeters(directions.getTotalDistance())
+                                    .build())
+                            .onErrorResume(e -> {
+                                log.warn("Failed to get directions for participant {}: {}",
+                                        participant.getUser().getId(), e.getMessage());
+                                // 실패 시 기본값 반환
+                                return Mono.just(ParticipantTravelInfo.builder()
+                                        .userId(participant.getUser().getId())
+                                        .nickname(participant.getUser().getNickname())
+                                        .departureAddress(participant.getDepartureAddress())
+                                        .travelTimeMinutes(0)
+                                        .distanceMeters(0)
+                                        .build());
+                            });
+                })
+                .toList();
+
+        // 모든 API 호출을 병렬로 실행하고 결과 수집
+        return Flux.merge(travelInfoMonos)
+                .collectList()
+                .block();
     }
 
     /**
