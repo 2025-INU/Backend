@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 /**
  * 추천 역 정보 DTO
  */
@@ -38,6 +40,12 @@ public class StationRecommendation {
     @Schema(description = "참여자들로부터의 평균 거리 (km)", example = "5.2")
     private double averageDistanceFromParticipants;
 
+    @Schema(description = "참여자별 이동 정보 목록")
+    private List<ParticipantTravelInfo> participantTravelInfos;
+
+    @Schema(description = "평균 이동 시간 (분)", example = "30")
+    private int averageTravelTimeMinutes;
+
     public static StationRecommendation from(SubwayStation station, double distanceFromMidpoint, double avgDistance) {
         return StationRecommendation.builder()
                 .stationId(station.getId())
@@ -47,6 +55,27 @@ public class StationRecommendation {
                 .longitude(station.getLongitude())
                 .distanceFromMidpoint(Math.round(distanceFromMidpoint * 100.0) / 100.0)
                 .averageDistanceFromParticipants(Math.round(avgDistance * 100.0) / 100.0)
+                .build();
+    }
+
+    public static StationRecommendation from(SubwayStation station, double distanceFromMidpoint, double avgDistance,
+                                              List<ParticipantTravelInfo> travelInfos) {
+        int avgTravelTime = travelInfos.isEmpty() ? 0 :
+                (int) travelInfos.stream()
+                        .mapToInt(ParticipantTravelInfo::getTravelTimeMinutes)
+                        .average()
+                        .orElse(0);
+
+        return StationRecommendation.builder()
+                .stationId(station.getId())
+                .stationName(station.getStationName())
+                .lineName(station.getLineName())
+                .latitude(station.getLatitude())
+                .longitude(station.getLongitude())
+                .distanceFromMidpoint(Math.round(distanceFromMidpoint * 100.0) / 100.0)
+                .averageDistanceFromParticipants(Math.round(avgDistance * 100.0) / 100.0)
+                .participantTravelInfos(travelInfos)
+                .averageTravelTimeMinutes(avgTravelTime)
                 .build();
     }
 }
