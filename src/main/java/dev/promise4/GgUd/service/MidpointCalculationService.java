@@ -21,10 +21,6 @@ public class MidpointCalculationService {
 
     private final SubwayStationRepository subwayStationRepository;
 
-    // 기본 생성자 (테스트용)
-    public MidpointCalculationService() {
-        this.subwayStationRepository = null;
-    }
 
     /**
      * 여러 출발지의 중간지점 계산 (평균 좌표)
