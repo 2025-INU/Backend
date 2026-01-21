@@ -1,9 +1,13 @@
 package dev.promise4.GgUd.service;
 
 import dev.promise4.GgUd.controller.dto.Coordinate;
+import dev.promise4.GgUd.repository.SubwayStationRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 
@@ -11,9 +15,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
 @DisplayName("MidpointCalculationService 테스트")
+@ExtendWith(MockitoExtension.class)
 class MidpointCalculationServiceTest {
 
-    private final MidpointCalculationService service = new MidpointCalculationService();
+    @Mock
+    private SubwayStationRepository subwayStationRepository;
+
+    private MidpointCalculationService getService() {
+        return new MidpointCalculationService(subwayStationRepository);
+    }
 
     @Nested
     @DisplayName("calculateMidpoint 테스트")
@@ -28,7 +38,7 @@ class MidpointCalculationServiceTest {
                     Coordinate.of(37.5573, 126.9250));
 
             // when
-            Coordinate midpoint = service.calculateMidpoint(departures);
+            Coordinate midpoint = getService().calculateMidpoint(departures);
 
             // then - 중간은 대략 (37.5276, 126.9763)
             assertThat(midpoint.getLatitude()).isCloseTo(37.5276, within(0.001));
@@ -45,7 +55,7 @@ class MidpointCalculationServiceTest {
                     Coordinate.of(37.5133, 127.1001));
 
             // when
-            Coordinate midpoint = service.calculateMidpoint(departures);
+            Coordinate midpoint = getService().calculateMidpoint(departures);
 
             // then
             double expectedLat = (37.4979 + 37.5573 + 37.5133) / 3;
@@ -72,7 +82,7 @@ class MidpointCalculationServiceTest {
             );
 
             // when
-            Coordinate midpoint = service.calculateMidpoint(departures);
+            Coordinate midpoint = getService().calculateMidpoint(departures);
 
             // then
             assertThat(midpoint.getLatitude()).isBetween(37.4, 37.7);
