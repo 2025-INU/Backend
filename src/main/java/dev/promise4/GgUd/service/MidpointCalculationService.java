@@ -6,6 +6,7 @@ import dev.promise4.GgUd.entity.SubwayStation;
 import dev.promise4.GgUd.repository.SubwayStationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
@@ -20,7 +21,6 @@ import java.util.List;
 public class MidpointCalculationService {
 
     private final SubwayStationRepository subwayStationRepository;
-
 
     /**
      * 여러 출발지의 중간지점 계산 (평균 좌표)
@@ -47,14 +47,19 @@ public class MidpointCalculationService {
     }
 
     /**
+     * 모든 지하철역 조회 (캐싱됨 - 7일 TTL)
+     */
+    @Cacheable(value = "subwayStations", key = "'all'")
+    public List<SubwayStation> getAllStations() {
+        log.info("Loading all subway stations from database (cache miss)");
+        return subwayStationRepository.findAll();
+    }
+
+    /**
      * 중간지점에서 가장 가까운 지하철역 찾기
      */
     public List<StationDistance> findNearestStations(Coordinate midpoint, int count) {
-        if (subwayStationRepository == null) {
-            throw new IllegalStateException("SubwayStationRepository is not initialized");
-        }
-
-        List<SubwayStation> allStations = subwayStationRepository.findAll();
+        List<SubwayStation> allStations = getAllStations();
 
         return allStations.stream()
                 .map(station -> {
