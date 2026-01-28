@@ -31,7 +31,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-          --requirepass ${{ secrets.REDIS_PASSWORD }}
         ports:
           - 6379:6379
 
@@ -59,10 +58,10 @@ jobs:
           SPRING_DATASOURCE_USERNAME: ${{ secrets.DB_USERNAME }}
           SPRING_DATASOURCE_PASSWORD: ${{ secrets.DB_PASSWORD }}
 
-          # Redis (Cache)
+          # Redis (Cache) - CI 환경에서는 비밀번호 없이 사용
           SPRING_DATA_REDIS_HOST: localhost
           SPRING_DATA_REDIS_PORT: 6379
-          SPRING_DATA_REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+          SPRING_DATA_REDIS_PASSWORD: ""
 
           # Security & JWT
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
