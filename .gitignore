@@ -54,3 +54,10 @@ logs/
 
 # Docs (local only)
 docs/
+
+# SSL 인증서
+*.pem
+*.key
+*.crt
+*.p12
+ssl/
