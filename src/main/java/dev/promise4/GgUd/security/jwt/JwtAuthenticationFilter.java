@@ -16,6 +16,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Date;
 
 /**
  * JWT 인증 필터
@@ -30,6 +31,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String BEARER_PREFIX = "Bearer ";
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final TokenBlacklistService tokenBlacklistService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -41,6 +43,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (StringUtils.hasText(jwt) && jwtTokenProvider.validateToken(jwt)) {
                 Long userId = jwtTokenProvider.getUserIdFromToken(jwt);
+                Date issuedAt = jwtTokenProvider.getIssuedAtFromToken(jwt);
+
+                // Redis 블랙리스트 확인 (로그아웃된 사용자 토큰 거부)
+                if (tokenBlacklistService.isUserTokensRevoked(userId, issuedAt)) {
+                    log.debug("Token rejected - user tokens revoked: userId={}", userId);
+                    filterChain.doFilter(request, response);
+                    return;
+                }
 
                 // 간단한 인증 객체 생성 (추후 UserDetails 사용 가능)
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(

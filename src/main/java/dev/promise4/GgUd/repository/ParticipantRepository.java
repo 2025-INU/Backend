@@ -16,14 +16,25 @@ import java.util.Optional;
 public interface ParticipantRepository extends JpaRepository<Participant, Long> {
 
     /**
-     * 약속 ID로 참여자 목록 조회
+     * 약속 ID로 참여자 목록 조회 (user FETCH JOIN으로 N+1 방지)
      */
-    List<Participant> findByPromiseId(Long promiseId);
+    @Query("SELECT p FROM Participant p LEFT JOIN FETCH p.user WHERE p.promise.id = :promiseId")
+    List<Participant> findByPromiseId(@Param("promiseId") Long promiseId);
 
     /**
-     * 약속 ID와 사용자 ID로 참여자 조회
+     * 약속 ID로 참여자 목록 조회 (user, promise FETCH JOIN)
      */
-    Optional<Participant> findByPromiseIdAndUserId(Long promiseId, Long userId);
+    @Query("SELECT p FROM Participant p " +
+            "LEFT JOIN FETCH p.user " +
+            "LEFT JOIN FETCH p.promise " +
+            "WHERE p.promise.id = :promiseId")
+    List<Participant> findByPromiseIdWithPromise(@Param("promiseId") Long promiseId);
+
+    /**
+     * 약속 ID와 사용자 ID로 참여자 조회 (user FETCH JOIN)
+     */
+    @Query("SELECT p FROM Participant p LEFT JOIN FETCH p.user WHERE p.promise.id = :promiseId AND p.user.id = :userId")
+    Optional<Participant> findByPromiseIdAndUserId(@Param("promiseId") Long promiseId, @Param("userId") Long userId);
 
     /**
      * 약속 ID와 사용자 ID로 참여 여부 확인
@@ -51,4 +62,11 @@ public interface ParticipantRepository extends JpaRepository<Participant, Long> 
      * 약속의 출발지 입력 완료 참여자 수 조회
      */
     long countByPromiseIdAndIsLocationSubmittedTrue(Long promiseId);
+
+    /**
+     * 출발지 미제출 참여자 목록 조회 (user FETCH JOIN)
+     */
+    @Query("SELECT p FROM Participant p LEFT JOIN FETCH p.user " +
+            "WHERE p.promise.id = :promiseId AND p.isLocationSubmitted = false")
+    List<Participant> findByPromiseIdAndLocationNotSubmitted(@Param("promiseId") Long promiseId);
 }

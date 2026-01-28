@@ -14,7 +14,11 @@ import java.util.UUID;
 @Table(name = "promises", indexes = {
         @Index(name = "idx_promises_invite_code", columnList = "invite_code"),
         @Index(name = "idx_promises_host_id", columnList = "host_id"),
-        @Index(name = "idx_promises_status", columnList = "status")
+        @Index(name = "idx_promises_status", columnList = "status"),
+        // 복합 인덱스: 호스트별 상태 조회 최적화
+        @Index(name = "idx_promises_host_status", columnList = "host_id, status"),
+        // 복합 인덱스: 상태별 최신순 조회 최적화
+        @Index(name = "idx_promises_status_created", columnList = "status, created_at")
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

@@ -56,6 +56,15 @@ public class RedisConfig {
         // 지하철역 데이터: 7일 캐싱 (거의 변경되지 않음)
         cacheConfigs.put("subwayStations", defaultConfig.entryTtl(Duration.ofDays(7)));
 
+        // 사용자 정보: 30분 캐싱
+        cacheConfigs.put("users", defaultConfig.entryTtl(Duration.ofMinutes(30)));
+
+        // 약속 정보: 10분 캐싱
+        cacheConfigs.put("promises", defaultConfig.entryTtl(Duration.ofMinutes(10)));
+
+        // 카카오 경로 정보: 1시간 캐싱
+        cacheConfigs.put("directions", defaultConfig.entryTtl(Duration.ofHours(1)));
+
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(defaultConfig)
                 .withInitialCacheConfigurations(cacheConfigs)

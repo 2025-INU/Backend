@@ -75,11 +75,12 @@ public class PromiseService {
     }
 
     /**
-     * 약속 참여
+     * 약속 참여 (Pessimistic Lock으로 동시성 제어)
      */
     @Transactional
     public PromiseResponse joinPromise(Long userId, String inviteCode) {
-        Promise promise = promiseRepository.findByInviteCode(inviteCode)
+        // Pessimistic Write Lock을 사용하여 동시 참여 요청 시 race condition 방지
+        Promise promise = promiseRepository.findByInviteCodeWithLock(inviteCode)
                 .orElseThrow(() -> new InvalidInviteCodeException(inviteCode));
 
         // 초대 만료 검증
@@ -92,7 +93,7 @@ public class PromiseService {
             throw new AlreadyJoinedException();
         }
 
-        // 최대 참여자 수 검증
+        // 최대 참여자 수 검증 (Lock 상태에서 정확한 count 조회)
         long currentCount = participantRepository.countByPromiseId(promise.getId());
         if (currentCount >= promise.getMaxParticipants()) {
             throw new MaxParticipantsExceededException(promise.getMaxParticipants());
