@@ -14,7 +14,9 @@ import java.time.LocalDateTime;
         @UniqueConstraint(name = "uk_participant_promise_user", columnNames = { "promise_id", "user_id" })
 }, indexes = {
         @Index(name = "idx_participants_promise_id", columnList = "promise_id"),
-        @Index(name = "idx_participants_user_id", columnList = "user_id")
+        @Index(name = "idx_participants_user_id", columnList = "user_id"),
+        // 복합 인덱스: 약속별 출발지 제출 여부 조회 최적화
+        @Index(name = "idx_participants_promise_location", columnList = "promise_id, is_location_submitted")
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

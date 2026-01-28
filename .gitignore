@@ -51,3 +51,13 @@ logs/
 
 .DS_Store
 **/.DS_Store
+
+# Docs (local only)
+docs/
+
+# SSL 인증서
+*.pem
+*.key
+*.crt
+*.p12
+ssl/

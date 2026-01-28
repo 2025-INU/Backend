@@ -108,8 +108,8 @@ class PromiseServiceTest {
         @Test
         @DisplayName("유효한 초대 코드로 약속에 참여한다")
         void joinPromise_success() {
-            // given
-            when(promiseRepository.findByInviteCode(testPromise.getInviteCode()))
+            // given - uses findByInviteCodeWithLock for pessimistic locking
+            when(promiseRepository.findByInviteCodeWithLock(testPromise.getInviteCode()))
                     .thenReturn(Optional.of(testPromise));
             when(participantRepository.existsByPromiseIdAndUserId(1L, 1L)).thenReturn(false);
             when(participantRepository.countByPromiseId(1L)).thenReturn(1L);
@@ -127,8 +127,8 @@ class PromiseServiceTest {
         @Test
         @DisplayName("유효하지 않은 초대 코드면 예외 발생")
         void joinPromise_invalidCode_throwsException() {
-            // given
-            when(promiseRepository.findByInviteCode("invalid-code")).thenReturn(Optional.empty());
+            // given - uses findByInviteCodeWithLock for pessimistic locking
+            when(promiseRepository.findByInviteCodeWithLock("invalid-code")).thenReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(() -> promiseService.joinPromise(1L, "invalid-code"))
@@ -138,8 +138,8 @@ class PromiseServiceTest {
         @Test
         @DisplayName("이미 참여한 약속이면 예외 발생")
         void joinPromise_alreadyJoined_throwsException() {
-            // given
-            when(promiseRepository.findByInviteCode(testPromise.getInviteCode()))
+            // given - uses findByInviteCodeWithLock for pessimistic locking
+            when(promiseRepository.findByInviteCodeWithLock(testPromise.getInviteCode()))
                     .thenReturn(Optional.of(testPromise));
             when(participantRepository.existsByPromiseIdAndUserId(1L, 1L)).thenReturn(true);
 
@@ -151,8 +151,8 @@ class PromiseServiceTest {
         @Test
         @DisplayName("최대 참여자 수 초과하면 예외 발생")
         void joinPromise_maxExceeded_throwsException() {
-            // given
-            when(promiseRepository.findByInviteCode(testPromise.getInviteCode()))
+            // given - uses findByInviteCodeWithLock for pessimistic locking
+            when(promiseRepository.findByInviteCodeWithLock(testPromise.getInviteCode()))
                     .thenReturn(Optional.of(testPromise));
             when(participantRepository.existsByPromiseIdAndUserId(1L, 1L)).thenReturn(false);
             when(participantRepository.countByPromiseId(1L)).thenReturn(10L); // max

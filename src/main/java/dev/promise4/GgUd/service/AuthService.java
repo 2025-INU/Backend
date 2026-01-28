@@ -5,6 +5,7 @@ import dev.promise4.GgUd.entity.RefreshToken;
 import dev.promise4.GgUd.entity.User;
 import dev.promise4.GgUd.repository.RefreshTokenRepository;
 import dev.promise4.GgUd.security.jwt.JwtTokenProvider;
+import dev.promise4.GgUd.security.jwt.TokenBlacklistService;
 import dev.promise4.GgUd.security.oauth.KakaoOAuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +26,7 @@ public class AuthService {
     private final KakaoOAuthService kakaoOAuthService;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final TokenBlacklistService tokenBlacklistService;
 
     /**
      * 카카오 로그인 URL 생성
@@ -103,7 +105,10 @@ public class AuthService {
      */
     @Transactional
     public void logout(Long userId) {
-        // 해당 사용자의 모든 Refresh Token 무효화
+        // Redis 블랙리스트에 사용자 토큰 무효화 등록
+        tokenBlacklistService.revokeAllUserTokens(userId, jwtTokenProvider.getRefreshTokenExpiration());
+
+        // DB에서도 해당 사용자의 모든 Refresh Token 무효화
         int revokedCount = refreshTokenRepository.revokeAllByUserId(userId);
         log.info("User logged out: userId={}, revokedTokens={}", userId, revokedCount);
     }

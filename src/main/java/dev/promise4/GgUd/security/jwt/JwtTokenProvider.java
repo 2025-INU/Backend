@@ -138,7 +138,7 @@ public class JwtTokenProvider {
 
     /**
      * 토큰 만료 시간 조회
-     * 
+     *
      * @param token JWT 토큰
      * @return 만료 시간
      */
@@ -150,6 +150,22 @@ public class JwtTokenProvider {
                 .getPayload();
 
         return claims.getExpiration();
+    }
+
+    /**
+     * 토큰 발급 시간 조회
+     *
+     * @param token JWT 토큰
+     * @return 발급 시간
+     */
+    public Date getIssuedAtFromToken(String token) {
+        Claims claims = Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        return claims.getIssuedAt();
     }
 
     /**

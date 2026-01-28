@@ -8,6 +8,7 @@ import dev.promise4.GgUd.entity.User;
 import dev.promise4.GgUd.entity.UserRole;
 import dev.promise4.GgUd.repository.RefreshTokenRepository;
 import dev.promise4.GgUd.security.jwt.JwtTokenProvider;
+import dev.promise4.GgUd.security.jwt.TokenBlacklistService;
 import dev.promise4.GgUd.security.oauth.KakaoOAuthService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -38,6 +39,9 @@ class AuthServiceTest {
 
     @Mock
     private RefreshTokenRepository refreshTokenRepository;
+
+    @Mock
+    private TokenBlacklistService tokenBlacklistService;
 
     @InjectMocks
     private AuthService authService;
@@ -204,12 +208,15 @@ class AuthServiceTest {
         @DisplayName("사용자의 모든 Refresh Token을 무효화한다")
         void logout_success() {
             // given
+            when(jwtTokenProvider.getRefreshTokenExpiration()).thenReturn(604800000L);
             when(refreshTokenRepository.revokeAllByUserId(1L)).thenReturn(2);
+            doNothing().when(tokenBlacklistService).revokeAllUserTokens(anyLong(), anyLong());
 
             // when
             authService.logout(1L);
 
             // then
+            verify(tokenBlacklistService).revokeAllUserTokens(1L, 604800000L);
             verify(refreshTokenRepository).revokeAllByUserId(1L);
         }
     }

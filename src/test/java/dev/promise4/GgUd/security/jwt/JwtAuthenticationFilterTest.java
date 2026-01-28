@@ -16,7 +16,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -27,13 +27,16 @@ class JwtAuthenticationFilterTest {
     private JwtTokenProvider jwtTokenProvider;
 
     @Mock
+    private TokenBlacklistService tokenBlacklistService;
+
+    @Mock
     private FilterChain filterChain;
 
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @BeforeEach
     void setUp() {
-        jwtAuthenticationFilter = new JwtAuthenticationFilter(jwtTokenProvider);
+        jwtAuthenticationFilter = new JwtAuthenticationFilter(jwtTokenProvider, tokenBlacklistService);
         SecurityContextHolder.clearContext();
     }
 
@@ -51,6 +54,8 @@ class JwtAuthenticationFilterTest {
 
             when(jwtTokenProvider.validateToken("valid-token")).thenReturn(true);
             when(jwtTokenProvider.getUserIdFromToken("valid-token")).thenReturn(1L);
+            when(jwtTokenProvider.getIssuedAtFromToken("valid-token")).thenReturn(new java.util.Date());
+            when(tokenBlacklistService.isUserTokensRevoked(anyLong(), any())).thenReturn(false);
 
             // when
             jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
