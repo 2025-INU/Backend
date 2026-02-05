@@ -120,6 +120,57 @@ class AuthServiceTest {
     }
 
     @Nested
+    @DisplayName("processKakaoLoginWithToken 테스트")
+    class ProcessKakaoLoginWithTokenTest {
+
+        private User mockUser;
+
+        @BeforeEach
+        void setUp() {
+            mockUser = User.builder()
+                    .kakaoId("12345")
+                    .nickname("테스트유저")
+                    .email("test@kakao.com")
+                    .role(UserRole.USER)
+                    .build();
+            try {
+                var field = User.class.getDeclaredField("id");
+                field.setAccessible(true);
+                field.set(mockUser, 1L);
+            } catch (Exception ignored) {
+            }
+        }
+
+        @Test
+        @DisplayName("카카오 SDK 토큰으로 로그인을 성공적으로 처리한다")
+        void processKakaoLoginWithToken_success() {
+            // given
+            when(kakaoOAuthService.processKakaoLoginWithToken("kakao-token")).thenReturn(mockUser);
+            when(jwtTokenProvider.createAccessToken(1L)).thenReturn("access-token");
+            when(jwtTokenProvider.createRefreshToken(1L)).thenReturn("refresh-token");
+            when(jwtTokenProvider.getTokenIdFromToken("refresh-token")).thenReturn("token-id");
+            when(jwtTokenProvider.getAccessTokenExpiration()).thenReturn(3600000L);
+            when(jwtTokenProvider.getRefreshTokenExpiration()).thenReturn(604800000L);
+            when(refreshTokenRepository.revokeAllByUserId(1L)).thenReturn(0);
+            when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(i -> i.getArgument(0));
+
+            // when
+            LoginResponse response = authService.processKakaoLoginWithToken("kakao-token");
+
+            // then
+            assertThat(response.getAccessToken()).isEqualTo("access-token");
+            assertThat(response.getRefreshToken()).isEqualTo("refresh-token");
+            assertThat(response.getTokenType()).isEqualTo("Bearer");
+            assertThat(response.getExpiresIn()).isEqualTo(3600L);
+            assertThat(response.getUserId()).isEqualTo(1L);
+            assertThat(response.getNickname()).isEqualTo("테스트유저");
+
+            verify(kakaoOAuthService).processKakaoLoginWithToken("kakao-token");
+            verify(refreshTokenRepository).save(any(RefreshToken.class));
+        }
+    }
+
+    @Nested
     @DisplayName("refreshToken 테스트")
     class RefreshTokenTest {
 

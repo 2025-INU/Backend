@@ -31,7 +31,7 @@ public class KakaoOAuthService {
 
     /**
      * 카카오 로그인 URL 생성
-     * 
+     *
      * @return 카카오 로그인 페이지 URL과 state 값
      */
     public KakaoLoginUrlResponse getKakaoLoginUrl() {
@@ -41,8 +41,8 @@ public class KakaoOAuthService {
     }
 
     /**
-     * 카카오 로그인 처리
-     * 
+     * 카카오 로그인 처리 (인가 코드 방식 - 웹용)
+     *
      * @param code 인가 코드
      * @return 로그인된 사용자 정보
      */
@@ -57,6 +57,22 @@ public class KakaoOAuthService {
         log.debug("Kakao user info received: kakaoId={}", userInfo.getKakaoId());
 
         // 3. 사용자 정보로 회원 조회 또는 신규 가입
+        return findOrCreateUser(userInfo);
+    }
+
+    /**
+     * 카카오 SDK 로그인 처리 (액세스 토큰 방식 - 모바일용)
+     *
+     * @param kakaoAccessToken 카카오 SDK에서 받은 액세스 토큰
+     * @return 로그인된 사용자 정보
+     */
+    @Transactional
+    public User processKakaoLoginWithToken(String kakaoAccessToken) {
+        // 1. 액세스 토큰으로 사용자 정보 요청
+        KakaoUserInfo userInfo = requestUserInfo(kakaoAccessToken);
+        log.debug("Kakao user info received via SDK token: kakaoId={}", userInfo.getKakaoId());
+
+        // 2. 사용자 정보로 회원 조회 또는 신규 가입
         return findOrCreateUser(userInfo);
     }
 

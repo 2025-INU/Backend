@@ -83,6 +83,26 @@ public class AuthController {
         }
 
         /**
+         * 카카오 SDK 로그인 (모바일용)
+         * 모바일 앱에서 카카오 SDK로 받은 액세스 토큰으로 로그인 처리
+         */
+        @PostMapping("/kakao/login")
+        @Operation(summary = "카카오 SDK 로그인 (모바일용)", description = "모바일 앱에서 카카오 SDK로 받은 액세스 토큰을 전달하면, " +
+                        "서버가 해당 토큰으로 카카오 사용자 정보를 조회하고 JWT를 발급합니다.")
+        @ApiResponses({
+                        @ApiResponse(responseCode = "200", description = "로그인 성공", content = @Content(schema = @Schema(implementation = LoginResponse.class))),
+                        @ApiResponse(responseCode = "400", description = "유효하지 않은 카카오 액세스 토큰"),
+                        @ApiResponse(responseCode = "500", description = "카카오 API 호출 실패")
+        })
+        public ResponseEntity<LoginResponse> kakaoSdkLogin(
+                        @Valid @RequestBody KakaoSdkLoginRequest request) {
+                log.debug("POST /api/v1/auth/kakao/login - SDK token login");
+
+                LoginResponse response = authService.processKakaoLoginWithToken(request.getKakaoAccessToken());
+                return ResponseEntity.ok(response);
+        }
+
+        /**
          * 토큰 갱신
          */
         @PostMapping("/refresh")
