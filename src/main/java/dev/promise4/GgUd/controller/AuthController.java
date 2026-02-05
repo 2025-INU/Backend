@@ -29,60 +29,6 @@ public class AuthController {
         private final AuthService authService;
 
         /**
-         * 카카오 로그인 URL 조회
-         */
-        @GetMapping("/kakao/login-url")
-        @Operation(summary = "카카오 로그인 URL 조회", description = "카카오 OAuth2 인증 페이지로 리다이렉트하기 위한 URL을 반환합니다. " +
-                        "클라이언트는 이 URL로 사용자를 리다이렉트해야 합니다.")
-        @ApiResponses({
-                        @ApiResponse(responseCode = "200", description = "로그인 URL 조회 성공", content = @Content(schema = @Schema(implementation = KakaoLoginUrlResponse.class)))
-        })
-        public ResponseEntity<KakaoLoginUrlResponse> getKakaoLoginUrl() {
-                log.debug("GET /api/v1/auth/kakao/login-url");
-                KakaoLoginUrlResponse response = authService.getKakaoLoginUrl();
-                return ResponseEntity.ok(response);
-        }
-
-        /**
-         * 카카오 로그인 콜백 처리 (브라우저 리다이렉트용 - GET)
-         */
-        @GetMapping("/kakao/callback")
-        @Operation(summary = "카카오 로그인 콜백 (GET)", description = "카카오 OAuth2 인증 후 브라우저 리다이렉트를 처리합니다.")
-        @ApiResponses({
-                        @ApiResponse(responseCode = "200", description = "로그인 성공", content = @Content(schema = @Schema(implementation = LoginResponse.class))),
-                        @ApiResponse(responseCode = "400", description = "잘못된 인가 코드")
-        })
-        public ResponseEntity<LoginResponse> kakaoCallbackGet(
-                        @RequestParam String code,
-                        @RequestParam(required = false) String state) {
-                log.debug("GET /api/v1/auth/kakao/callback - code: {}...",
-                                code.substring(0, Math.min(10, code.length())));
-
-                LoginResponse response = authService.processKakaoLogin(code);
-                return ResponseEntity.ok(response);
-        }
-
-        /**
-         * 카카오 로그인 콜백 처리 (Swagger 테스트용 - POST)
-         */
-        @PostMapping("/kakao/callback")
-        @Operation(summary = "카카오 로그인 콜백 (POST)", description = "카카오 OAuth2 인증 후 콜백을 처리합니다. " +
-                        "인가 코드를 받아 토큰을 교환하고, 사용자 정보를 조회한 뒤 JWT를 발급합니다.")
-        @ApiResponses({
-                        @ApiResponse(responseCode = "200", description = "로그인 성공", content = @Content(schema = @Schema(implementation = LoginResponse.class))),
-                        @ApiResponse(responseCode = "400", description = "잘못된 인가 코드"),
-                        @ApiResponse(responseCode = "500", description = "카카오 API 호출 실패")
-        })
-        public ResponseEntity<LoginResponse> kakaoCallbackPost(
-                        @Valid @RequestBody KakaoCallbackRequest request) {
-                log.debug("POST /api/v1/auth/kakao/callback - code: {}...",
-                                request.getCode().substring(0, Math.min(10, request.getCode().length())));
-
-                LoginResponse response = authService.processKakaoLogin(request.getCode());
-                return ResponseEntity.ok(response);
-        }
-
-        /**
          * 카카오 SDK 로그인 (모바일용)
          * 모바일 앱에서 카카오 SDK로 받은 액세스 토큰으로 로그인 처리
          */

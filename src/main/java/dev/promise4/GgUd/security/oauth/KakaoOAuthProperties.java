@@ -6,7 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 /**
- * 카카오 OAuth2 설정 프로퍼티
+ * 카카오 OAuth2 설정 프로퍼티 (모바일 SDK 전용)
  */
 @Getter
 @Setter
@@ -18,16 +18,6 @@ public class KakaoOAuthProperties {
     private String clientSecret;
     private String redirectUri;
 
-    // 카카오 API URLs
-    private String authorizationUri = "https://kauth.kakao.com/oauth/authorize";
-    private String tokenUri = "https://kauth.kakao.com/oauth/token";
+    // 카카오 API URL (사용자 정보 조회용)
     private String userInfoUri = "https://kapi.kakao.com/v2/user/me";
-
-    /**
-     * 카카오 로그인 URL 생성
-     */
-    public String buildAuthorizationUrl(String state) {
-        return String.format("%s?client_id=%s&redirect_uri=%s&response_type=code&state=%s",
-                authorizationUri, clientId, redirectUri, state);
-    }
 }

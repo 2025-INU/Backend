@@ -3,22 +3,16 @@ package dev.promise4.GgUd.security.oauth;
 import dev.promise4.GgUd.entity.User;
 import dev.promise4.GgUd.entity.UserRole;
 import dev.promise4.GgUd.repository.UserRepository;
-import dev.promise4.GgUd.security.oauth.dto.KakaoTokenResponse;
 import dev.promise4.GgUd.security.oauth.dto.KakaoUserInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
 
-import java.util.UUID;
-
 /**
- * 카카오 OAuth2 로그인 서비스
+ * 카카오 OAuth2 로그인 서비스 (모바일 SDK 전용)
  */
 @Slf4j
 @Service
@@ -28,37 +22,6 @@ public class KakaoOAuthService {
     private final KakaoOAuthProperties kakaoProperties;
     private final UserRepository userRepository;
     private final RestClient restClient;
-
-    /**
-     * 카카오 로그인 URL 생성
-     *
-     * @return 카카오 로그인 페이지 URL과 state 값
-     */
-    public KakaoLoginUrlResponse getKakaoLoginUrl() {
-        String state = UUID.randomUUID().toString();
-        String loginUrl = kakaoProperties.buildAuthorizationUrl(state);
-        return new KakaoLoginUrlResponse(loginUrl, state);
-    }
-
-    /**
-     * 카카오 로그인 처리 (인가 코드 방식 - 웹용)
-     *
-     * @param code 인가 코드
-     * @return 로그인된 사용자 정보
-     */
-    @Transactional
-    public User processKakaoLogin(String code) {
-        // 1. 인가 코드로 액세스 토큰 요청
-        KakaoTokenResponse tokenResponse = requestAccessToken(code);
-        log.debug("Kakao access token received");
-
-        // 2. 액세스 토큰으로 사용자 정보 요청
-        KakaoUserInfo userInfo = requestUserInfo(tokenResponse.getAccessToken());
-        log.debug("Kakao user info received: kakaoId={}", userInfo.getKakaoId());
-
-        // 3. 사용자 정보로 회원 조회 또는 신규 가입
-        return findOrCreateUser(userInfo);
-    }
 
     /**
      * 카카오 SDK 로그인 처리 (액세스 토큰 방식 - 모바일용)
@@ -74,25 +37,6 @@ public class KakaoOAuthService {
 
         // 2. 사용자 정보로 회원 조회 또는 신규 가입
         return findOrCreateUser(userInfo);
-    }
-
-    /**
-     * 인가 코드로 액세스 토큰 요청
-     */
-    private KakaoTokenResponse requestAccessToken(String code) {
-        MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
-        formData.add("grant_type", "authorization_code");
-        formData.add("client_id", kakaoProperties.getClientId());
-        formData.add("client_secret", kakaoProperties.getClientSecret());
-        formData.add("redirect_uri", kakaoProperties.getRedirectUri());
-        formData.add("code", code);
-
-        return restClient.post()
-                .uri(kakaoProperties.getTokenUri())
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .body(formData)
-                .retrieve()
-                .body(KakaoTokenResponse.class);
     }
 
     /**
@@ -141,11 +85,5 @@ public class KakaoOAuthService {
                     log.info("New user registered: kakaoId={}", userInfo.getKakaoId());
                     return userRepository.save(newUser);
                 });
-    }
-
-    /**
-     * 카카오 로그인 URL 응답 DTO
-     */
-    public record KakaoLoginUrlResponse(String loginUrl, String state) {
     }
 }

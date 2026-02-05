@@ -17,7 +17,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -39,83 +38,6 @@ class AuthControllerTest {
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(authController).build();
         objectMapper = new ObjectMapper();
-    }
-
-    @Nested
-    @DisplayName("GET /api/v1/auth/kakao/login-url")
-    class GetKakaoLoginUrlTest {
-
-        @Test
-        @DisplayName("카카오 로그인 URL을 성공적으로 반환한다")
-        void getKakaoLoginUrl_success() throws Exception {
-            // given
-            KakaoLoginUrlResponse response = KakaoLoginUrlResponse.builder()
-                    .loginUrl("https://kauth.kakao.com/oauth/authorize?...")
-                    .state("test-state-123")
-                    .build();
-
-            when(authService.getKakaoLoginUrl()).thenReturn(response);
-
-            // when & then
-            mockMvc.perform(get("/api/v1/auth/kakao/login-url"))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.loginUrl").value("https://kauth.kakao.com/oauth/authorize?..."))
-                    .andExpect(jsonPath("$.state").value("test-state-123"));
-
-            verify(authService).getKakaoLoginUrl();
-        }
-    }
-
-    @Nested
-    @DisplayName("POST /api/v1/auth/kakao/callback")
-    class KakaoCallbackTest {
-
-        @Test
-        @DisplayName("카카오 콜백을 성공적으로 처리한다")
-        void kakaoCallback_success() throws Exception {
-            // given
-            KakaoCallbackRequest request = new KakaoCallbackRequest("test-auth-code", "test-state");
-
-            LoginResponse response = LoginResponse.builder()
-                    .accessToken("access-token-123")
-                    .refreshToken("refresh-token-123")
-                    .tokenType("Bearer")
-                    .expiresIn(3600L)
-                    .userId(1L)
-                    .nickname("홍길동")
-                    .build();
-
-            when(authService.processKakaoLogin("test-auth-code")).thenReturn(response);
-
-            // when & then
-            mockMvc.perform(post("/api/v1/auth/kakao/callback")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.accessToken").value("access-token-123"))
-                    .andExpect(jsonPath("$.refreshToken").value("refresh-token-123"))
-                    .andExpect(jsonPath("$.tokenType").value("Bearer"))
-                    .andExpect(jsonPath("$.expiresIn").value(3600))
-                    .andExpect(jsonPath("$.userId").value(1))
-                    .andExpect(jsonPath("$.nickname").value("홍길동"));
-
-            verify(authService).processKakaoLogin("test-auth-code");
-        }
-
-        @Test
-        @DisplayName("빈 코드로 요청하면 실패한다")
-        void kakaoCallback_withEmptyCode_returnsBadRequest() throws Exception {
-            // given
-            KakaoCallbackRequest request = new KakaoCallbackRequest("", "test-state");
-
-            // when & then
-            mockMvc.perform(post("/api/v1/auth/kakao/callback")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest());
-
-            verify(authService, never()).processKakaoLogin(any());
-        }
     }
 
     @Nested
