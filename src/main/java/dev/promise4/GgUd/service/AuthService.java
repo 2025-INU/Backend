@@ -29,44 +29,6 @@ public class AuthService {
     private final TokenBlacklistService tokenBlacklistService;
 
     /**
-     * 카카오 로그인 URL 생성
-     */
-    public KakaoLoginUrlResponse getKakaoLoginUrl() {
-        KakaoOAuthService.KakaoLoginUrlResponse response = kakaoOAuthService.getKakaoLoginUrl();
-        return KakaoLoginUrlResponse.builder()
-                .loginUrl(response.loginUrl())
-                .state(response.state())
-                .build();
-    }
-
-    /**
-     * 카카오 로그인 처리 (인가 코드 방식 - 웹용)
-     */
-    @Transactional
-    public LoginResponse processKakaoLogin(String code) {
-        // 카카오 로그인 처리 및 사용자 정보 조회/저장
-        User user = kakaoOAuthService.processKakaoLogin(code);
-
-        // JWT 토큰 생성
-        String accessToken = jwtTokenProvider.createAccessToken(user.getId());
-        String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
-
-        // Refresh Token DB 저장
-        saveRefreshToken(user.getId(), refreshToken);
-
-        log.info("User logged in: userId={}, nickname={}", user.getId(), user.getNickname());
-
-        return LoginResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .tokenType("Bearer")
-                .expiresIn(jwtTokenProvider.getAccessTokenExpiration() / 1000)
-                .userId(user.getId())
-                .nickname(user.getNickname())
-                .build();
-    }
-
-    /**
      * 카카오 SDK 로그인 처리 (액세스 토큰 방식 - 모바일용)
      */
     @Transactional

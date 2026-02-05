@@ -1,6 +1,5 @@
 package dev.promise4.GgUd.service;
 
-import dev.promise4.GgUd.controller.dto.KakaoLoginUrlResponse;
 import dev.promise4.GgUd.controller.dto.LoginResponse;
 import dev.promise4.GgUd.controller.dto.TokenRefreshResponse;
 import dev.promise4.GgUd.entity.RefreshToken;
@@ -45,79 +44,6 @@ class AuthServiceTest {
 
     @InjectMocks
     private AuthService authService;
-
-    @Nested
-    @DisplayName("getKakaoLoginUrl 테스트")
-    class GetKakaoLoginUrlTest {
-
-        @Test
-        @DisplayName("카카오 로그인 URL을 반환한다")
-        void getKakaoLoginUrl_success() {
-            // given
-            when(kakaoOAuthService.getKakaoLoginUrl())
-                    .thenReturn(new KakaoOAuthService.KakaoLoginUrlResponse(
-                            "https://kauth.kakao.com/oauth/authorize?...",
-                            "test-state"));
-
-            // when
-            KakaoLoginUrlResponse response = authService.getKakaoLoginUrl();
-
-            // then
-            assertThat(response.getLoginUrl()).contains("kauth.kakao.com");
-            assertThat(response.getState()).isEqualTo("test-state");
-        }
-    }
-
-    @Nested
-    @DisplayName("processKakaoLogin 테스트")
-    class ProcessKakaoLoginTest {
-
-        private User mockUser;
-
-        @BeforeEach
-        void setUp() {
-            mockUser = User.builder()
-                    .kakaoId("12345")
-                    .nickname("테스트유저")
-                    .email("test@kakao.com")
-                    .role(UserRole.USER)
-                    .build();
-            // Simulate ID set
-            try {
-                var field = User.class.getDeclaredField("id");
-                field.setAccessible(true);
-                field.set(mockUser, 1L);
-            } catch (Exception ignored) {
-            }
-        }
-
-        @Test
-        @DisplayName("카카오 로그인을 성공적으로 처리한다")
-        void processKakaoLogin_success() {
-            // given
-            when(kakaoOAuthService.processKakaoLogin("test-code")).thenReturn(mockUser);
-            when(jwtTokenProvider.createAccessToken(1L)).thenReturn("access-token");
-            when(jwtTokenProvider.createRefreshToken(1L)).thenReturn("refresh-token");
-            when(jwtTokenProvider.getTokenIdFromToken("refresh-token")).thenReturn("token-id");
-            when(jwtTokenProvider.getAccessTokenExpiration()).thenReturn(3600000L);
-            when(jwtTokenProvider.getRefreshTokenExpiration()).thenReturn(604800000L);
-            when(refreshTokenRepository.revokeAllByUserId(1L)).thenReturn(0);
-            when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(i -> i.getArgument(0));
-
-            // when
-            LoginResponse response = authService.processKakaoLogin("test-code");
-
-            // then
-            assertThat(response.getAccessToken()).isEqualTo("access-token");
-            assertThat(response.getRefreshToken()).isEqualTo("refresh-token");
-            assertThat(response.getTokenType()).isEqualTo("Bearer");
-            assertThat(response.getExpiresIn()).isEqualTo(3600L);
-            assertThat(response.getUserId()).isEqualTo(1L);
-            assertThat(response.getNickname()).isEqualTo("테스트유저");
-
-            verify(refreshTokenRepository).save(any(RefreshToken.class));
-        }
-    }
 
     @Nested
     @DisplayName("processKakaoLoginWithToken 테스트")
