@@ -40,7 +40,7 @@ public class AuthService {
     }
 
     /**
-     * 카카오 로그인 처리
+     * 카카오 로그인 처리 (인가 코드 방식 - 웹용)
      */
     @Transactional
     public LoginResponse processKakaoLogin(String code) {
@@ -55,6 +55,30 @@ public class AuthService {
         saveRefreshToken(user.getId(), refreshToken);
 
         log.info("User logged in: userId={}, nickname={}", user.getId(), user.getNickname());
+
+        return LoginResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .tokenType("Bearer")
+                .expiresIn(jwtTokenProvider.getAccessTokenExpiration() / 1000)
+                .userId(user.getId())
+                .nickname(user.getNickname())
+                .build();
+    }
+
+    /**
+     * 카카오 SDK 로그인 처리 (액세스 토큰 방식 - 모바일용)
+     */
+    @Transactional
+    public LoginResponse processKakaoLoginWithToken(String kakaoAccessToken) {
+        User user = kakaoOAuthService.processKakaoLoginWithToken(kakaoAccessToken);
+
+        String accessToken = jwtTokenProvider.createAccessToken(user.getId());
+        String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
+
+        saveRefreshToken(user.getId(), refreshToken);
+
+        log.info("User logged in via SDK: userId={}, nickname={}", user.getId(), user.getNickname());
 
         return LoginResponse.builder()
                 .accessToken(accessToken)

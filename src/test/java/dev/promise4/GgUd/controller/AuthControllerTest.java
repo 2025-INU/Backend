@@ -119,6 +119,58 @@ class AuthControllerTest {
     }
 
     @Nested
+    @DisplayName("POST /api/v1/auth/kakao/login")
+    class KakaoSdkLoginTest {
+
+        @Test
+        @DisplayName("카카오 SDK 토큰으로 로그인을 성공적으로 처리한다")
+        void kakaoSdkLogin_success() throws Exception {
+            // given
+            KakaoSdkLoginRequest request = new KakaoSdkLoginRequest("kakao-access-token-123");
+
+            LoginResponse response = LoginResponse.builder()
+                    .accessToken("jwt-access-token")
+                    .refreshToken("jwt-refresh-token")
+                    .tokenType("Bearer")
+                    .expiresIn(3600L)
+                    .userId(1L)
+                    .nickname("홍길동")
+                    .build();
+
+            when(authService.processKakaoLoginWithToken("kakao-access-token-123")).thenReturn(response);
+
+            // when & then
+            mockMvc.perform(post("/api/v1/auth/kakao/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.accessToken").value("jwt-access-token"))
+                    .andExpect(jsonPath("$.refreshToken").value("jwt-refresh-token"))
+                    .andExpect(jsonPath("$.tokenType").value("Bearer"))
+                    .andExpect(jsonPath("$.expiresIn").value(3600))
+                    .andExpect(jsonPath("$.userId").value(1))
+                    .andExpect(jsonPath("$.nickname").value("홍길동"));
+
+            verify(authService).processKakaoLoginWithToken("kakao-access-token-123");
+        }
+
+        @Test
+        @DisplayName("빈 카카오 토큰으로 요청하면 실패한다")
+        void kakaoSdkLogin_withEmptyToken_returnsBadRequest() throws Exception {
+            // given
+            KakaoSdkLoginRequest request = new KakaoSdkLoginRequest("");
+
+            // when & then
+            mockMvc.perform(post("/api/v1/auth/kakao/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isBadRequest());
+
+            verify(authService, never()).processKakaoLoginWithToken(any());
+        }
+    }
+
+    @Nested
     @DisplayName("POST /api/v1/auth/refresh")
     class RefreshTokenTest {
 
