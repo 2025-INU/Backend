@@ -148,14 +148,20 @@ public class PromiseService {
     }
 
     /**
-     * 내 약속 목록 조회
+     * 내 약속 목록 조회 (키워드 검색 지원)
      */
     @Transactional(readOnly = true)
-    public Page<PromiseResponse> getMyPromises(Long userId, PromiseStatus status, Pageable pageable) {
+    public Page<PromiseResponse> getMyPromises(Long userId, PromiseStatus status, String keyword, Pageable pageable) {
         Page<Promise> promises;
 
-        if (status != null) {
-            promises = promiseRepository.findByHostIdAndStatus(userId, status, pageable);
+        boolean hasKeyword = keyword != null && !keyword.isBlank();
+
+        if (hasKeyword && status != null) {
+            promises = promiseRepository.findByUserParticipationAndStatusAndKeyword(userId, status, keyword.trim(), pageable);
+        } else if (hasKeyword) {
+            promises = promiseRepository.findByUserParticipationAndKeyword(userId, keyword.trim(), pageable);
+        } else if (status != null) {
+            promises = promiseRepository.findByUserParticipationAndStatus(userId, status, pageable);
         } else {
             promises = promiseRepository.findByUserParticipation(userId, pageable);
         }
@@ -164,14 +170,31 @@ public class PromiseService {
     }
 
     /**
+     * 내 약속 요약 목록 조회 (제목, 일시, 주최자)
+     */
+    @Transactional(readOnly = true)
+    public Page<PromiseSummaryResponse> getMyPromiseSummaries(Long userId, PromiseStatus status, Pageable pageable) {
+        Page<Promise> promises;
+
+        if (status != null) {
+            promises = promiseRepository.findByUserParticipationAndStatus(userId, status, pageable);
+        } else {
+            promises = promiseRepository.findByUserParticipation(userId, pageable);
+        }
+
+        return promises.map(PromiseSummaryResponse::from);
+    }
+
+    /**
      * 약속 상세 조회
      */
     @Transactional(readOnly = true)
     public PromiseResponse getPromise(Long promiseId) {
-        Promise promise = promiseRepository.findById(promiseId)
+        Promise promise = promiseRepository.findByIdWithHost(promiseId)
                 .orElseThrow(() -> new IllegalArgumentException("약속을 찾을 수 없습니다"));
 
-        return PromiseResponse.from(promise);
+        long participantCount = participantRepository.countByPromiseId(promiseId);
+        return PromiseResponse.from(promise, participantCount);
     }
 
     /**

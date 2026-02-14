@@ -65,6 +65,68 @@ public interface PromiseRepository extends JpaRepository<Promise, Long> {
     Optional<Promise> findByIdWithHost(@Param("id") Long id);
 
     /**
+     * 사용자가 참여한 약속 중 상태 필터링 조회
+     */
+    @Query(value = "SELECT DISTINCT p FROM Promise p " +
+            "LEFT JOIN FETCH p.host " +
+            "LEFT JOIN Participant pt ON pt.promise = p " +
+            "WHERE (p.host.id = :userId OR pt.user.id = :userId) " +
+            "AND p.status = :status",
+            countQuery = "SELECT COUNT(DISTINCT p.id) FROM Promise p " +
+                    "LEFT JOIN Participant pt ON pt.promise = p " +
+                    "WHERE (p.host.id = :userId OR pt.user.id = :userId) " +
+                    "AND p.status = :status")
+    Page<Promise> findByUserParticipationAndStatus(
+            @Param("userId") Long userId,
+            @Param("status") PromiseStatus status,
+            Pageable pageable);
+
+    /**
+     * 사용자가 참여한 약속 중 키워드 검색 (약속 제목 또는 참여자 닉네임)
+     */
+    @Query(value = "SELECT DISTINCT p FROM Promise p " +
+            "LEFT JOIN FETCH p.host " +
+            "LEFT JOIN Participant pt ON pt.promise = p " +
+            "WHERE (p.host.id = :userId OR pt.user.id = :userId) " +
+            "AND (LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+            "     OR EXISTS (SELECT 1 FROM Participant pt2 JOIN pt2.user u " +
+            "                WHERE pt2.promise = p AND LOWER(u.nickname) LIKE LOWER(CONCAT('%', :keyword, '%'))))",
+            countQuery = "SELECT COUNT(DISTINCT p.id) FROM Promise p " +
+                    "LEFT JOIN Participant pt ON pt.promise = p " +
+                    "WHERE (p.host.id = :userId OR pt.user.id = :userId) " +
+                    "AND (LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+                    "     OR EXISTS (SELECT 1 FROM Participant pt2 JOIN pt2.user u " +
+                    "                WHERE pt2.promise = p AND LOWER(u.nickname) LIKE LOWER(CONCAT('%', :keyword, '%'))))")
+    Page<Promise> findByUserParticipationAndKeyword(
+            @Param("userId") Long userId,
+            @Param("keyword") String keyword,
+            Pageable pageable);
+
+    /**
+     * 사용자가 참여한 약속 중 상태 + 키워드 검색
+     */
+    @Query(value = "SELECT DISTINCT p FROM Promise p " +
+            "LEFT JOIN FETCH p.host " +
+            "LEFT JOIN Participant pt ON pt.promise = p " +
+            "WHERE (p.host.id = :userId OR pt.user.id = :userId) " +
+            "AND p.status = :status " +
+            "AND (LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+            "     OR EXISTS (SELECT 1 FROM Participant pt2 JOIN pt2.user u " +
+            "                WHERE pt2.promise = p AND LOWER(u.nickname) LIKE LOWER(CONCAT('%', :keyword, '%'))))",
+            countQuery = "SELECT COUNT(DISTINCT p.id) FROM Promise p " +
+                    "LEFT JOIN Participant pt ON pt.promise = p " +
+                    "WHERE (p.host.id = :userId OR pt.user.id = :userId) " +
+                    "AND p.status = :status " +
+                    "AND (LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+                    "     OR EXISTS (SELECT 1 FROM Participant pt2 JOIN pt2.user u " +
+                    "                WHERE pt2.promise = p AND LOWER(u.nickname) LIKE LOWER(CONCAT('%', :keyword, '%'))))")
+    Page<Promise> findByUserParticipationAndStatusAndKeyword(
+            @Param("userId") Long userId,
+            @Param("status") PromiseStatus status,
+            @Param("keyword") String keyword,
+            Pageable pageable);
+
+    /**
      * 스케줄러: CONFIRMED 상태 + promiseDateTime 임박한 약속 조회
      */
     @Query("SELECT p FROM Promise p WHERE p.status = :status AND p.promiseDateTime <= :threshold")
