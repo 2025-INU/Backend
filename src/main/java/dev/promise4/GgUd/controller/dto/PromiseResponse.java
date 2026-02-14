@@ -50,6 +50,9 @@ public class PromiseResponse {
     @Schema(description = "호스트 닉네임", example = "홍길동")
     private String hostNickname;
 
+    @Schema(description = "참여 인원 수", example = "4")
+    private long participantCount;
+
     @Schema(description = "확정 위도")
     private Double confirmedLatitude;
 
@@ -63,6 +66,10 @@ public class PromiseResponse {
     private LocalDateTime createdAt;
 
     public static PromiseResponse from(Promise promise) {
+        return from(promise, 0);
+    }
+
+    public static PromiseResponse from(Promise promise, long participantCount) {
         return PromiseResponse.builder()
                 .id(promise.getId())
                 .title(promise.getTitle())
@@ -74,6 +81,7 @@ public class PromiseResponse {
                 .maxParticipants(promise.getMaxParticipants())
                 .hostId(promise.getHost().getId())
                 .hostNickname(promise.getHost().getNickname())
+                .participantCount(participantCount)
                 .confirmedLatitude(promise.getConfirmedLatitude())
                 .confirmedLongitude(promise.getConfirmedLongitude())
                 .confirmedPlaceName(promise.getConfirmedPlaceName())

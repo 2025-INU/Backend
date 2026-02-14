@@ -134,7 +134,7 @@ public class PromiseController {
      * 내 약속 목록 조회
      */
     @GetMapping
-    @Operation(summary = "내 약속 목록 조회", description = "내가 참여한 약속 목록을 조회합니다. 상태별 필터링 가능.")
+    @Operation(summary = "내 약속 목록 조회", description = "내가 참여한 약속 목록을 조회합니다. 상태별 필터링 및 키워드 검색 가능.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공"),
             @ApiResponse(responseCode = "401", description = "인증 필요")
@@ -142,10 +142,30 @@ public class PromiseController {
     public ResponseEntity<Page<PromiseResponse>> getMyPromises(
             @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @Parameter(description = "상태 필터") @RequestParam(required = false) PromiseStatus status,
+            @Parameter(description = "검색 키워드 (약속 제목 또는 참여자 닉네임)") @RequestParam(required = false) String keyword,
             @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
 
-        log.debug("GET /api/v1/promises - userId: {}, status: {}", userId, status);
-        Page<PromiseResponse> response = promiseService.getMyPromises(userId, status, pageable);
+        log.debug("GET /api/v1/promises - userId: {}, status: {}, keyword: {}", userId, status, keyword);
+        Page<PromiseResponse> response = promiseService.getMyPromises(userId, status, keyword, pageable);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 내 약속 요약 목록 조회 (제목, 일시, 주최자만)
+     */
+    @GetMapping("/summary")
+    @Operation(summary = "내 약속 요약 목록 조회", description = "약속 제목, 일시, 주최자만 포함된 간략한 목록을 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 필요")
+    })
+    public ResponseEntity<Page<PromiseSummaryResponse>> getMyPromiseSummaries(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+            @Parameter(description = "상태 필터") @RequestParam(required = false) PromiseStatus status,
+            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+
+        log.debug("GET /api/v1/promises/summary - userId: {}, status: {}", userId, status);
+        Page<PromiseSummaryResponse> response = promiseService.getMyPromiseSummaries(userId, status, pageable);
         return ResponseEntity.ok(response);
     }
 
