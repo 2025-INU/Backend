@@ -2,6 +2,7 @@ package dev.promise4.GgUd.controller;
 
 import dev.promise4.GgUd.controller.dto.*;
 import dev.promise4.GgUd.entity.PromiseStatus;
+import dev.promise4.GgUd.service.PlaceRecommendationService;
 import dev.promise4.GgUd.service.PromiseService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -35,6 +36,7 @@ import java.util.List;
 public class PromiseController {
 
     private final PromiseService promiseService;
+    private final PlaceRecommendationService placeRecommendationService;
 
     /**
      * 약속 생성
@@ -184,6 +186,27 @@ public class PromiseController {
 
         log.debug("GET /api/v1/promises/{}", promiseId);
         PromiseResponse response = promiseService.getPromise(promiseId);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 사용자 맞춤 장소 추천 (AI 서버 연동)
+     */
+    @PostMapping("/{promiseId}/place-recommendations")
+    @Operation(summary = "장소 추천", description = "자연어 요청으로 AI 기반 장소 추천을 받습니다. 중간지점이 확정된 경우 근처 장소를 우선 추천합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "추천 성공", content = @Content(schema = @Schema(implementation = PlaceRecommendationResponse.class))),
+            @ApiResponse(responseCode = "400", description = "참여자 아님 또는 잘못된 요청"),
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "404", description = "약속 없음")
+    })
+    public ResponseEntity<PlaceRecommendationResponse> getPlaceRecommendations(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+            @PathVariable Long promiseId,
+            @Valid @RequestBody PlaceRecommendationRequest request) {
+
+        log.debug("POST /api/v1/promises/{}/place-recommendations - userId: {}", promiseId, userId);
+        PlaceRecommendationResponse response = placeRecommendationService.getPlaceRecommendations(promiseId, userId, request);
         return ResponseEntity.ok(response);
     }
 

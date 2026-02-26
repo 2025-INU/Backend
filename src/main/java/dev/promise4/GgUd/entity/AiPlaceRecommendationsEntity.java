@@ -1,7 +1,19 @@
 package dev.promise4.GgUd.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Lob;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -14,8 +26,8 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "ai_place_recommendations", indexes = {
-    @Index(name = "idx_recommendations_meeting_id", columnList = "meeting_id"),
-    @Index(name = "idx_recommendations_ranking", columnList = "meeting_id, ranking"),
+    @Index(name = "idx_recommendations_promise_id", columnList = "promise_id"),
+    @Index(name = "idx_recommendations_promise_ranking", columnList = "promise_id, ranking"),
     @Index(name = "idx_recommendations_selected", columnList = "is_selected")
 })
 @EntityListeners(AuditingEntityListener.class)
@@ -31,9 +43,8 @@ public class AiPlaceRecommendationsEntity {
     @Column(name = "recommendation_id")
     private Long recommendationId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "meeting_id", nullable = false)
-    private MeetingsEntity meeting;
+    @Column(name = "promise_id", nullable = false)
+    private Long promiseId;
 
     @Column(name = "place_id", nullable = false, length = 100)
     private String placeId;
