@@ -188,6 +188,24 @@ public class PromiseController {
     }
 
     /**
+     * 약속 요약 조회 (제목, 일시, 주최자)
+     */
+    @GetMapping("/{promiseId}/summary")
+    @Operation(summary = "약속 요약 조회", description = "약속의 제목, 일시, 주최자 정보만 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공", content = @Content(schema = @Schema(implementation = PromiseSummaryResponse.class))),
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "404", description = "약속 없음")
+    })
+    public ResponseEntity<PromiseSummaryResponse> getPromiseSummary(
+            @PathVariable Long promiseId) {
+
+        log.debug("GET /api/v1/promises/{}/summary", promiseId);
+        PromiseSummaryResponse response = promiseService.getPromiseSummary(promiseId);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      * 약속 상태 조회
      */
     @GetMapping("/{promiseId}/status")

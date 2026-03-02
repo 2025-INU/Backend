@@ -186,6 +186,17 @@ public class PromiseService {
     }
 
     /**
+     * 약속 요약 조회 (제목, 일시, 주최자)
+     */
+    @Transactional(readOnly = true)
+    public PromiseSummaryResponse getPromiseSummary(Long promiseId) {
+        Promise promise = promiseRepository.findByIdWithHost(promiseId)
+                .orElseThrow(() -> new IllegalArgumentException("약속을 찾을 수 없습니다"));
+
+        return PromiseSummaryResponse.from(promise);
+    }
+
+    /**
      * 약속 상세 조회
      */
     @Transactional(readOnly = true)
