@@ -2,6 +2,12 @@
 # Local Development Profile
 # ===================================
 
+app:
+  ai:
+    server-url: http://localhost:8000
+  cors:
+    allowed-origins: http://localhost:3000,http://localhost:3001
+
 spring:
   jpa:
     show-sql: true
@@ -17,7 +23,3 @@ spring:
 logging:
   level:
     dev.promise4.GgUd: DEBUG
-
-app:
-  cors:
-    allowed-origins: http://localhost:3000,http://localhost:3001

@@ -129,6 +129,8 @@ jwt:
 
 # Application Custom Configuration
 app:
+  ai:
+    server-url: ${AI_SERVER_URL:http://localhost:8000}
   meeting:
     max-participants: 10
     invite-expiration-hours: 24
