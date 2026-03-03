@@ -170,19 +170,14 @@ public class PromiseService {
     }
 
     /**
-     * 내 약속 요약 목록 조회 (제목, 일시, 주최자)
+     * 약속 요약 조회 (제목, 일시, 주최자)
      */
     @Transactional(readOnly = true)
-    public Page<PromiseSummaryResponse> getMyPromiseSummaries(Long userId, PromiseStatus status, Pageable pageable) {
-        Page<Promise> promises;
+    public PromiseSummaryResponse getPromiseSummary(Long promiseId) {
+        Promise promise = promiseRepository.findByIdWithHost(promiseId)
+                .orElseThrow(() -> new IllegalArgumentException("약속을 찾을 수 없습니다"));
 
-        if (status != null) {
-            promises = promiseRepository.findByUserParticipationAndStatus(userId, status, pageable);
-        } else {
-            promises = promiseRepository.findByUserParticipation(userId, pageable);
-        }
-
-        return promises.map(PromiseSummaryResponse::from);
+        return PromiseSummaryResponse.from(promise);
     }
 
     /**

@@ -108,6 +108,7 @@ public class KakaoApiClient {
         return kakaoWebClient.post()
                 .uri(uri)
                 .header("Authorization", "Bearer " + userAccessToken)
+                .header("Content-Type", "application/x-www-form-urlencoded")
                 .bodyValue(body)
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, response -> response.bodyToMono(String.class)

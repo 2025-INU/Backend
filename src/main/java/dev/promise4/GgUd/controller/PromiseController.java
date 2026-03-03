@@ -153,25 +153,6 @@ public class PromiseController {
     }
 
     /**
-     * 내 약속 요약 목록 조회 (제목, 일시, 주최자만)
-     */
-    @GetMapping("/summary")
-    @Operation(summary = "내 약속 요약 목록 조회", description = "약속 제목, 일시, 주최자만 포함된 간략한 목록을 조회합니다.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "조회 성공"),
-            @ApiResponse(responseCode = "401", description = "인증 필요")
-    })
-    public ResponseEntity<Page<PromiseSummaryResponse>> getMyPromiseSummaries(
-            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
-            @Parameter(description = "상태 필터") @RequestParam(required = false) PromiseStatus status,
-            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-
-        log.debug("GET /api/v1/promises/summary - userId: {}, status: {}", userId, status);
-        Page<PromiseSummaryResponse> response = promiseService.getMyPromiseSummaries(userId, status, pageable);
-        return ResponseEntity.ok(response);
-    }
-
-    /**
      * 약속 상세 조회
      */
     @GetMapping("/{promiseId}")
@@ -186,6 +167,24 @@ public class PromiseController {
 
         log.debug("GET /api/v1/promises/{}", promiseId);
         PromiseResponse response = promiseService.getPromise(promiseId);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 약속 요약 조회 (제목, 일시, 주최자)
+     */
+    @GetMapping("/{promiseId}/summary")
+    @Operation(summary = "약속 요약 조회", description = "약속의 제목, 일시, 주최자 정보만 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공", content = @Content(schema = @Schema(implementation = PromiseSummaryResponse.class))),
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "404", description = "약속 없음")
+    })
+    public ResponseEntity<PromiseSummaryResponse> getPromiseSummary(
+            @PathVariable Long promiseId) {
+
+        log.debug("GET /api/v1/promises/{}/summary", promiseId);
+        PromiseSummaryResponse response = promiseService.getPromiseSummary(promiseId);
         return ResponseEntity.ok(response);
     }
 
