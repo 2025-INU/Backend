@@ -1,6 +1,7 @@
 # ===================================
 # Local Development Profile
 # ===================================
+# .env 의 DB_USERNAME, DB_PASSWORD, REDIS_PASSWORD 사용 (로컬에서 source .env 후 bootRun)
 
 app:
   ai:
@@ -9,6 +10,14 @@ app:
     allowed-origins: http://localhost:3000,http://localhost:3001
 
 spring:
+  datasource:
+    url: jdbc:postgresql://localhost:${DB_PORT:5432}/ggud_db
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+  data:
+    redis:
+      password: ${REDIS_PASSWORD:}
+
   jpa:
     show-sql: true
     hibernate:
