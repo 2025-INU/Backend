@@ -31,3 +31,5 @@ Spring Boot 3.5.7 | PostgreSQL 15 | Redis 7 | Docker Compose
 
 ## License
 [Your License]
+
+CI/CD 자동 실행 확인용 README 업데이트
