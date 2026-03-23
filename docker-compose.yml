@@ -111,6 +111,8 @@ services:
   db:
     image: postgres:15-alpine
     container_name: ggud-postgres
+    ports:
+      - "5432:5432"
     environment:
       - POSTGRES_USER=${DB_USERNAME}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
@@ -208,5 +210,5 @@ services:
 
 networks:
   ggud-network:
-    driver: bridge
-
+    external: true
+    name: ggud-network
