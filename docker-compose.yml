@@ -210,5 +210,5 @@ services:
 
 networks:
   ggud-network:
-    driver: bridge
-
+    external: true
+    name: ggud-network
