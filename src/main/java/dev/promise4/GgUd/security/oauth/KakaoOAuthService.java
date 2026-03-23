@@ -36,7 +36,11 @@ public class KakaoOAuthService {
         log.debug("Kakao user info received via SDK token: kakaoId={}", userInfo.getKakaoId());
 
         // 2. 사용자 정보로 회원 조회 또는 신규 가입
-        return findOrCreateUser(userInfo);
+        User user = findOrCreateUser(userInfo, kakaoAccessToken);
+
+        // 3. 카카오 액세스 토큰 저장 (메시지 전송용)
+        user.updateKakaoAccessToken(kakaoAccessToken);
+        return user;
     }
 
     /**
@@ -53,7 +57,7 @@ public class KakaoOAuthService {
     /**
      * 카카오 ID로 기존 사용자 조회 또는 신규 생성
      */
-    private User findOrCreateUser(KakaoUserInfo userInfo) {
+    private User findOrCreateUser(KakaoUserInfo userInfo, String kakaoAccessToken) {
         // 닉네임이 없는 경우 기본값 설정
         String nickname = userInfo.getNickname();
         if (nickname == null || nickname.isBlank()) {

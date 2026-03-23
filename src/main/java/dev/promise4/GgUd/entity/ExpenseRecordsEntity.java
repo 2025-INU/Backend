@@ -3,6 +3,7 @@ package dev.promise4.GgUd.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
@@ -14,8 +15,10 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "expense_records", indexes = {
-        @Index(name = "idx_expense_meeting_user", columnList = "meeting_id, user_id"),
-        @Index(name = "idx_expense_meeting", columnList = "meeting_id")
+        @Index(name = "idx_expense_promise_user", columnList = "promise_id, user_id"),
+        @Index(name = "idx_expense_promise", columnList = "promise_id")
+}, uniqueConstraints = {
+        @UniqueConstraint(name = "uq_expense_promise_user", columnNames = {"promise_id", "user_id"})
 })
 @EntityListeners(AuditingEntityListener.class)
 @Getter
@@ -31,8 +34,8 @@ public class ExpenseRecordsEntity {
     private Long recordId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "meeting_id", nullable = false)
-    private MeetingsEntity meeting;
+    @JoinColumn(name = "promise_id", nullable = false)
+    private Promise promise;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -47,4 +50,8 @@ public class ExpenseRecordsEntity {
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @LastModifiedDate
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 }

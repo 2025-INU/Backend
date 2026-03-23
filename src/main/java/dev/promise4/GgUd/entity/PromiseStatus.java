@@ -11,14 +11,9 @@ public enum PromiseStatus {
     CREATED,
 
     /**
-     * 참여자 모집 중
+     * 참여자 모집 중 (참여자들이 참여하면서 출발지도 입력)
      */
     RECRUITING,
-
-    /**
-     * 출발지 입력 대기
-     */
-    WAITING_LOCATIONS,
 
     /**
      * 중간 지점 선택 중

@@ -6,6 +6,7 @@ import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -17,6 +18,9 @@ import java.util.List;
  */
 @Configuration
 public class OpenApiConfig {
+
+        @Value("${SERVER_IP:http://localhost:8080}")
+        private String serverIp;
 
         @Bean
         public OpenAPI openAPI() {
@@ -42,7 +46,7 @@ public class OpenApiConfig {
                                                 .description("GgUd 약속 관리 시스템 API 문서"))
                                 .servers(List.of(
                                                 new Server().url("http://localhost:8080").description("로컬 서버"),
-                                                new Server().url("http://3.37.196.242").description("운영 서버")))
+                                                new Server().url(serverIp).description("운영 서버")))
                                 .addSecurityItem(securityRequirement)
                                 .components(new Components()
                                                 .addSecuritySchemes(securitySchemeName, securityScheme));

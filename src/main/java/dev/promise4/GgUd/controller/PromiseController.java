@@ -210,6 +210,66 @@ public class PromiseController {
     }
 
     /**
+     * 약속 취소 (호스트 전용)
+     */
+    @PatchMapping("/{promiseId}/cancel")
+    @Operation(summary = "약속 취소", description = "호스트가 약속을 취소합니다. 완료되거나 이미 취소된 약속은 취소할 수 없습니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "취소 성공"),
+            @ApiResponse(responseCode = "400", description = "취소 불가능한 상태"),
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "403", description = "호스트가 아님")
+    })
+    public ResponseEntity<Void> cancelPromise(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+            @PathVariable Long promiseId) {
+
+        log.debug("PATCH /api/v1/promises/{}/cancel - userId: {}", promiseId, userId);
+        promiseService.cancelPromise(promiseId, userId);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * 중간지점 선택 시작 (호스트 전용)
+     */
+    @PostMapping("/{promiseId}/start-midpoint-selection")
+    @Operation(summary = "중간지점 선택 시작", description = "호스트가 모든 참여자의 출발지 입력을 확인 후 다음 단계로 진행합니다. 미입력 참여자가 있으면 실패합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "진행 성공"),
+            @ApiResponse(responseCode = "400", description = "미입력 참여자 존재 또는 잘못된 상태"),
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "403", description = "호스트가 아님")
+    })
+    public ResponseEntity<Void> startMidpointSelection(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+            @PathVariable Long promiseId) {
+
+        log.debug("POST /api/v1/promises/{}/start-midpoint-selection - userId: {}", promiseId, userId);
+        promiseService.startSelectingMidpoint(promiseId, userId);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * 약속 종료 (호스트 전용)
+     */
+    @PatchMapping("/{promiseId}/complete")
+    @Operation(summary = "약속 종료", description = "호스트가 약속을 종료합니다. IN_PROGRESS 상태에서만 가능합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "종료 성공"),
+            @ApiResponse(responseCode = "400", description = "진행 중이 아닌 약속"),
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "403", description = "호스트가 아님")
+    })
+    public ResponseEntity<Void> completePromise(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+            @PathVariable Long promiseId) {
+
+        log.debug("PATCH /api/v1/promises/{}/complete - userId: {}", promiseId, userId);
+        promiseService.completePromise(promiseId, userId);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
      * 약속 상태 조회
      */
     @GetMapping("/{promiseId}/status")

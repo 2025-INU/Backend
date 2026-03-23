@@ -33,7 +33,12 @@ public enum ErrorCode {
     MEETING_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "Meeting not found"),
     MEETING_ALREADY_STARTED(HttpStatus.BAD_REQUEST, "M002", "Meeting already started"),
     MEETING_FULL(HttpStatus.BAD_REQUEST, "M003", "Meeting is full"),
-    INVALID_MEETING_TIME(HttpStatus.BAD_REQUEST, "M004", "Invalid meeting time");
+    INVALID_MEETING_TIME(HttpStatus.BAD_REQUEST, "M004", "Invalid meeting time"),
+
+    // Settlement
+    SETTLEMENT_ALREADY_COMPLETED(HttpStatus.BAD_REQUEST, "S001", "이미 정산이 완료되었습니다"),
+    SETTLEMENT_NOT_AVAILABLE(HttpStatus.BAD_REQUEST, "S002", "정산은 약속이 진행 중이거나 완료된 상태에서만 가능합니다"),
+    EXPENSE_AMOUNT_INVALID(HttpStatus.BAD_REQUEST, "S003", "결제 금액은 0원 이상이어야 합니다");
 
     private final HttpStatus httpStatus;
     private final String code;

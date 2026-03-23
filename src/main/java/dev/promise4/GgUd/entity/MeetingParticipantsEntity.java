@@ -17,9 +17,9 @@ import java.time.LocalDateTime;
 @Table(name = "meeting_participants", uniqueConstraints = {
         @UniqueConstraint(name = "unique_meeting_user", columnNames = { "meeting_id", "user_id" })
 }, indexes = {
-        @Index(name = "idx_participants_meeting_id", columnList = "meeting_id"),
-        @Index(name = "idx_participants_user_id", columnList = "user_id"),
-        @Index(name = "idx_participants_status", columnList = "invitation_status")
+        @Index(name = "idx_meeting_participants_meeting_id", columnList = "meeting_id"),
+        @Index(name = "idx_meeting_participants_user_id", columnList = "user_id"),
+        @Index(name = "idx_meeting_participants_status", columnList = "invitation_status")
 })
 @EntityListeners(AuditingEntityListener.class)
 @Getter

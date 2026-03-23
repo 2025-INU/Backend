@@ -8,12 +8,25 @@ app:
   cors:
     allowed-origins: http://localhost:3000,http://localhost:3001
 
+kakao:
+  client-id: local-dummy
+  client-secret: local-dummy
+  api:
+    rest-api-key: local-dummy
+
 spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          kakao:
+            client-id: local-dummy
+            client-secret: local-dummy
+            redirect-uri: http://localhost:8080/login/oauth2/code/kakao
   jpa:
     show-sql: true
     hibernate:
-      ddl-auto: update
-
+      ddl-auto: create
   devtools:
     restart:
       enabled: true
