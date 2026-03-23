@@ -178,6 +178,7 @@ class PromiseServiceTest {
                     .promiseDateTime(LocalDateTime.now().plusDays(1))
                     .host(host)
                     .build();
+            promise.startRecruiting();
             setPromiseId(promise, 1L);
 
             Participant participant = Participant.builder()
