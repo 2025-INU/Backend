@@ -1,5 +1,6 @@
 package dev.promise4.GgUd.controller;
 
+import dev.promise4.GgUd.controller.dto.UpdateProfileRequest;
 import dev.promise4.GgUd.controller.dto.UserResponse;
 import dev.promise4.GgUd.entity.User;
 import dev.promise4.GgUd.service.UserService;
@@ -10,6 +11,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -42,6 +44,25 @@ public class UserController {
 
         log.debug("GET /api/v1/users/me - userId: {}", userId);
         User user = userService.getUserById(userId);
+        return ResponseEntity.ok(UserResponse.from(user));
+    }
+
+    /**
+     * 내 프로필 수정
+     */
+    @PatchMapping("/me")
+    @Operation(summary = "내 프로필 수정", description = "닉네임 및 프로필 이미지를 수정합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "수정 성공", content = @Content(schema = @Schema(implementation = UserResponse.class))),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @ApiResponse(responseCode = "401", description = "인증 필요")
+    })
+    public ResponseEntity<UserResponse> updateMyProfile(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+            @Valid @RequestBody UpdateProfileRequest request) {
+
+        log.debug("PATCH /api/v1/users/me - userId: {}", userId);
+        User user = userService.updateProfile(userId, request.getNickname(), request.getProfileImageUrl());
         return ResponseEntity.ok(UserResponse.from(user));
     }
 }

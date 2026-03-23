@@ -119,26 +119,11 @@ class PromiseTest {
         }
 
         @Test
-        @DisplayName("RECRUITING에서 WAITING_LOCATIONS으로 변경할 수 있다")
-        void changeStatus_recruitingToWaitingLocations() {
+        @DisplayName("RECRUITING에서 SELECTING_MIDPOINT로 변경할 수 있다")
+        void changeStatus_recruitingToSelectingMidpoint() {
             // given
             Promise promise = createPromise();
             promise.startRecruiting();
-
-            // when
-            promise.closeRecruiting();
-
-            // then
-            assertThat(promise.getStatus()).isEqualTo(PromiseStatus.WAITING_LOCATIONS);
-        }
-
-        @Test
-        @DisplayName("WAITING_LOCATIONS에서 SELECTING_MIDPOINT로 변경할 수 있다")
-        void changeStatus_waitingToSelecting() {
-            // given
-            Promise promise = createPromise();
-            promise.startRecruiting();
-            promise.closeRecruiting();
 
             // when
             promise.startSelectingMidpoint();
@@ -153,7 +138,6 @@ class PromiseTest {
             // given
             Promise promise = createPromise();
             promise.startRecruiting();
-            promise.closeRecruiting();
             promise.startSelectingMidpoint();
 
             // when

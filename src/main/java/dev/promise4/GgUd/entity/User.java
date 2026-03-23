@@ -43,6 +43,9 @@ public class User extends BaseTimeEntity {
     @Builder.Default
     private Boolean isActive = true;
 
+    @Column(name = "kakao_access_token", columnDefinition = "TEXT")
+    private String kakaoAccessToken;
+
     /**
      * 프로필 정보 업데이트
      */
@@ -50,6 +53,13 @@ public class User extends BaseTimeEntity {
         this.nickname = nickname;
         this.email = email;
         this.profileImageUrl = profileImageUrl;
+    }
+
+    /**
+     * 카카오 액세스 토큰 갱신 (메시지 전송용)
+     */
+    public void updateKakaoAccessToken(String kakaoAccessToken) {
+        this.kakaoAccessToken = kakaoAccessToken;
     }
 
     /**

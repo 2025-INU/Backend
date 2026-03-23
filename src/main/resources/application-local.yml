@@ -9,7 +9,14 @@ app:
   cors:
     allowed-origins: http://localhost:3000,http://localhost:3001
 
+kakao:
+  client-id: local-dummy
+  client-secret: local-dummy
+  api:
+    rest-api-key: local-dummy
+
 spring:
+
   datasource:
     url: jdbc:postgresql://localhost:${DB_PORT:5432}/ggud_db
     username: ${DB_USERNAME:postgres}
@@ -21,8 +28,7 @@ spring:
   jpa:
     show-sql: true
     hibernate:
-      ddl-auto: update
-
+      ddl-auto: create
   devtools:
     restart:
       enabled: true

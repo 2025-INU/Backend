@@ -48,20 +48,20 @@ public class UserService {
 
     /**
      * 프로필 업데이트 (캐시 무효화)
+     * 이메일은 카카오 계정 정보이므로 변경 불가
      *
      * @param userId          사용자 ID
      * @param nickname        닉네임
-     * @param email           이메일
      * @param profileImageUrl 프로필 이미지 URL
      * @return 업데이트된 사용자
      */
     @CacheEvict(value = "users", key = "#userId")
     @Transactional
-    public User updateProfile(Long userId, String nickname, String email, String profileImageUrl) {
+    public User updateProfile(Long userId, String nickname, String profileImageUrl) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + userId));
 
-        user.updateProfile(nickname, email, profileImageUrl);
+        user.updateProfile(nickname, user.getEmail(), profileImageUrl);
         log.info("User profile updated: userId={}, nickname={}", userId, nickname);
 
         return user;

@@ -117,10 +117,17 @@ public class PromiseService {
     }
 
     /**
-     * 출발지 입력
+     * 출발지 입력 (RECRUITING 상태에서만 가능)
      */
     @Transactional
     public ParticipantResponse submitDepartureLocation(Long promiseId, Long userId, UpdateDepartureRequest request) {
+        Promise promise = promiseRepository.findById(promiseId)
+                .orElseThrow(() -> new IllegalArgumentException("약속을 찾을 수 없습니다"));
+
+        if (promise.getStatus() != PromiseStatus.RECRUITING) {
+            throw new IllegalStateException("모집 중인 약속에만 출발지를 입력할 수 있습니다. 현재 상태: " + promise.getStatus());
+        }
+
         Participant participant = participantRepository.findByPromiseIdAndUserId(promiseId, userId)
                 .orElseThrow(() -> new IllegalArgumentException("참여자를 찾을 수 없습니다"));
 
@@ -129,12 +136,36 @@ public class PromiseService {
                 request.getLongitude(),
                 request.getAddress());
 
-        // 모든 참여자 출발지 입력 완료 시 상태 변경
-        checkAndUpdatePromiseStatus(promiseId);
-
         log.debug("Departure location submitted: promiseId={}, userId={}", promiseId, userId);
 
         return ParticipantResponse.from(participant);
+    }
+
+    /**
+     * 중간지점 선택 시작 (호스트 전용)
+     * 모든 참여자가 출발지를 입력했을 때만 가능
+     */
+    @Transactional
+    public void startSelectingMidpoint(Long promiseId, Long userId) {
+        Promise promise = promiseRepository.findById(promiseId)
+                .orElseThrow(() -> new IllegalArgumentException("약속을 찾을 수 없습니다"));
+
+        if (!promise.getHost().getId().equals(userId)) {
+            throw new IllegalStateException("호스트만 다음 단계로 진행할 수 있습니다");
+        }
+
+        if (promise.getStatus() != PromiseStatus.RECRUITING) {
+            throw new IllegalStateException("모집 중 상태에서만 진행할 수 있습니다. 현재 상태: " + promise.getStatus());
+        }
+
+        boolean allSubmitted = participantRepository.allParticipantsSubmittedLocation(promiseId);
+        if (!allSubmitted) {
+            throw new IllegalStateException("모든 참여자가 출발지를 입력해야 합니다");
+        }
+
+        promise.startSelectingMidpoint();
+
+        log.info("Midpoint selection started: promiseId={}, hostId={}", promiseId, userId);
     }
 
     /**
@@ -193,6 +224,44 @@ public class PromiseService {
     }
 
     /**
+     * 약속 취소 (호스트 전용)
+     * COMPLETED, CANCELLED 상태가 아니면 언제든 취소 가능
+     */
+    @Transactional
+    public void cancelPromise(Long promiseId, Long userId) {
+        Promise promise = promiseRepository.findById(promiseId)
+                .orElseThrow(() -> new IllegalArgumentException("약속을 찾을 수 없습니다"));
+
+        if (!promise.getHost().getId().equals(userId)) {
+            throw new IllegalStateException("호스트만 약속을 취소할 수 있습니다");
+        }
+
+        promise.cancel();
+        log.info("Promise cancelled by host: promiseId={}, hostId={}", promiseId, userId);
+    }
+
+    /**
+     * 약속 종료 (호스트 전용)
+     * IN_PROGRESS 상태에서 호스트가 종료 버튼 누를 때 호출
+     */
+    @Transactional
+    public void completePromise(Long promiseId, Long userId) {
+        Promise promise = promiseRepository.findById(promiseId)
+                .orElseThrow(() -> new IllegalArgumentException("약속을 찾을 수 없습니다"));
+
+        if (!promise.getHost().getId().equals(userId)) {
+            throw new IllegalStateException("호스트만 약속을 종료할 수 있습니다");
+        }
+
+        if (promise.getStatus() != PromiseStatus.IN_PROGRESS) {
+            throw new IllegalStateException("진행 중인 약속만 종료할 수 있습니다. 현재 상태: " + promise.getStatus());
+        }
+
+        promise.complete();
+        log.info("Promise completed by host: promiseId={}, hostId={}", promiseId, userId);
+    }
+
+    /**
      * 약속 상태 조회
      */
     @Transactional(readOnly = true)
@@ -203,19 +272,4 @@ public class PromiseService {
         return promise.getStatus();
     }
 
-    /**
-     * 모든 참여자 출발지 입력 완료 시 상태 변경
-     */
-    private void checkAndUpdatePromiseStatus(Long promiseId) {
-        Promise promise = promiseRepository.findById(promiseId)
-                .orElseThrow(() -> new IllegalArgumentException("약속을 찾을 수 없습니다"));
-
-        if (promise.getStatus() == PromiseStatus.WAITING_LOCATIONS) {
-            boolean allSubmitted = participantRepository.allParticipantsSubmittedLocation(promiseId);
-            if (allSubmitted) {
-                promise.startSelectingMidpoint();
-                log.info("All participants submitted locations, status changed: promiseId={}", promiseId);
-            }
-        }
-    }
 }

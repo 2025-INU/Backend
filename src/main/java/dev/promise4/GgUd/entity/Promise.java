@@ -67,6 +67,9 @@ public class Promise extends BaseTimeEntity {
     @Column(name = "confirmed_place_name", length = 100)
     private String confirmedPlaceName;
 
+    @Column(name = "settlement_completed_at")
+    private LocalDateTime settlementCompletedAt;
+
     /**
      * Builder 커스텀: inviteCode와 inviteExpiredAt 자동 생성
      */
@@ -84,18 +87,11 @@ public class Promise extends BaseTimeEntity {
     }
 
     /**
-     * 모집 마감 (RECRUITING → WAITING_LOCATIONS)
-     */
-    public void closeRecruiting() {
-        validateStatusTransition(PromiseStatus.RECRUITING, PromiseStatus.WAITING_LOCATIONS);
-        this.status = PromiseStatus.WAITING_LOCATIONS;
-    }
-
-    /**
-     * 중간 지점 선택 시작 (WAITING_LOCATIONS → SELECTING_MIDPOINT)
+     * 중간 지점 선택 시작 (RECRUITING → SELECTING_MIDPOINT)
+     * 호스트가 모든 참여자의 위치 입력 완료를 확인 후 수동으로 호출
      */
     public void startSelectingMidpoint() {
-        validateStatusTransition(PromiseStatus.WAITING_LOCATIONS, PromiseStatus.SELECTING_MIDPOINT);
+        validateStatusTransition(PromiseStatus.RECRUITING, PromiseStatus.SELECTING_MIDPOINT);
         this.status = PromiseStatus.SELECTING_MIDPOINT;
     }
 
@@ -134,6 +130,20 @@ public class Promise extends BaseTimeEntity {
             throw new IllegalStateException("이미 완료되었거나 취소된 약속입니다");
         }
         this.status = PromiseStatus.CANCELLED;
+    }
+
+    /**
+     * 정산 완료 여부
+     */
+    public boolean isSettlementCompleted() {
+        return this.settlementCompletedAt != null;
+    }
+
+    /**
+     * 정산 완료 처리
+     */
+    public void completeSettlement() {
+        this.settlementCompletedAt = LocalDateTime.now();
     }
 
     /**
