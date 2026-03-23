@@ -1,6 +1,7 @@
 # ===================================
 # Local Development Profile
 # ===================================
+# .env 의 DB_USERNAME, DB_PASSWORD, REDIS_PASSWORD 사용 (로컬에서 source .env 후 bootRun)
 
 app:
   ai:
@@ -15,14 +16,15 @@ kakao:
     rest-api-key: local-dummy
 
 spring:
-  security:
-    oauth2:
-      client:
-        registration:
-          kakao:
-            client-id: local-dummy
-            client-secret: local-dummy
-            redirect-uri: http://localhost:8080/login/oauth2/code/kakao
+
+  datasource:
+    url: jdbc:postgresql://localhost:${DB_PORT:5432}/ggud_db
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+  data:
+    redis:
+      password: ${REDIS_PASSWORD:}
+
   jpa:
     show-sql: true
     hibernate:

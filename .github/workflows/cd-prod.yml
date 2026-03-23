@@ -42,6 +42,15 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/ggud-backend:latest
 
+      - name: Sync docker-compose file to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "docker-compose.yml"
+          target: "/opt/ggud/"
+
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
