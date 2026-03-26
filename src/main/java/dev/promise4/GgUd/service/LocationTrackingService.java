@@ -104,7 +104,7 @@ public class LocationTrackingService {
      */
     private boolean isTrackingAllowed(Promise promise) {
         PromiseStatus status = promise.getStatus();
-        return status == PromiseStatus.CONFIRMED || status == PromiseStatus.IN_PROGRESS;
+        return status == PromiseStatus.PLACE_CONFIRMED || status == PromiseStatus.IN_PROGRESS;
     }
 
     /**

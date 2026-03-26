@@ -50,7 +50,7 @@ public class MidpointController {
      * 중간지점 확정 (호스트만)
      */
     @PostMapping("/confirm")
-    @Operation(summary = "중간지점 확정", description = "호스트가 최종 중간지점을 확정합니다. 약속 상태가 CONFIRMED로 변경됩니다.")
+    @Operation(summary = "중간지점 확정", description = "호스트가 지하철역을 중간지점으로 확정합니다. 약속 상태가 MIDPOINT_CONFIRMED로 변경됩니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "확정 성공"),
             @ApiResponse(responseCode = "400", description = "잘못된 상태"),
@@ -65,6 +65,48 @@ public class MidpointController {
         log.debug("POST /api/v1/promises/{}/midpoint/confirm - userId: {}, stationId: {}",
                 promiseId, userId, request.getStationId());
         midpointService.confirmMidpoint(promiseId, userId, request.getStationId());
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * 중간지점 초기화 (호스트만) - 뒤로가기로 중간지점 재선택 시 사용
+     */
+    @PostMapping("/reset")
+    @Operation(summary = "중간지점 초기화", description = "호스트가 중간지점을 초기화하여 다시 선택할 수 있습니다. AI 추천 캐시도 삭제됩니다. IN_PROGRESS 이전까지만 가능합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "초기화 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 상태 (IN_PROGRESS 이후 불가)"),
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "403", description = "권한 없음 (호스트만 가능)")
+    })
+    public ResponseEntity<Void> resetMidpoint(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+            @PathVariable Long promiseId) {
+
+        log.debug("POST /api/v1/promises/{}/midpoint/reset - userId: {}", promiseId, userId);
+        midpointService.resetMidpoint(promiseId, userId);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * 최종 약속 장소 확정 (호스트만)
+     */
+    @PostMapping("/place-confirm")
+    @Operation(summary = "최종 약속 장소 확정", description = "호스트가 AI 추천 장소 중 하나를 최종 약속 장소로 확정합니다. 약속 상태가 PLACE_CONFIRMED로 변경됩니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "확정 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 상태 (MIDPOINT_CONFIRMED 이후부터 가능)"),
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "403", description = "권한 없음 (호스트만 가능)")
+    })
+    public ResponseEntity<Void> confirmFinalPlace(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+            @PathVariable Long promiseId,
+            @Valid @RequestBody ConfirmFinalPlaceRequest request) {
+
+        log.debug("POST /api/v1/promises/{}/midpoint/place-confirm - userId: {}, placeName: {}",
+                promiseId, userId, request.getPlaceName());
+        midpointService.confirmFinalPlace(promiseId, userId, request);
         return ResponseEntity.ok().build();
     }
 }

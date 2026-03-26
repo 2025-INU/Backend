@@ -58,6 +58,17 @@ public class Promise extends BaseTimeEntity {
     @JoinColumn(name = "host_id", nullable = false)
     private User host;
 
+    // 중간지점 (선택된 지하철역)
+    @Column(name = "midpoint_latitude")
+    private Double midpointLatitude;
+
+    @Column(name = "midpoint_longitude")
+    private Double midpointLongitude;
+
+    @Column(name = "midpoint_station_name", length = 100)
+    private String midpointStationName;
+
+    // 최종 약속 장소 (AI 추천 중 호스트가 확정한 장소)
     @Column(name = "confirmed_latitude")
     private Double confirmedLatitude;
 
@@ -96,21 +107,54 @@ public class Promise extends BaseTimeEntity {
     }
 
     /**
-     * 장소 확정 (SELECTING_MIDPOINT → CONFIRMED)
+     * 중간지점 확정 (SELECTING_MIDPOINT → MIDPOINT_CONFIRMED)
      */
-    public void confirmLocation(Double latitude, Double longitude, String placeName) {
-        validateStatusTransition(PromiseStatus.SELECTING_MIDPOINT, PromiseStatus.CONFIRMED);
-        this.confirmedLatitude = latitude;
-        this.confirmedLongitude = longitude;
-        this.confirmedPlaceName = placeName;
-        this.status = PromiseStatus.CONFIRMED;
+    public void confirmMidpointStation(Double latitude, Double longitude, String stationName) {
+        validateStatusTransition(PromiseStatus.SELECTING_MIDPOINT, PromiseStatus.MIDPOINT_CONFIRMED);
+        this.midpointLatitude = latitude;
+        this.midpointLongitude = longitude;
+        this.midpointStationName = stationName;
+        this.status = PromiseStatus.MIDPOINT_CONFIRMED;
     }
 
     /**
-     * 약속 진행 시작 (CONFIRMED → IN_PROGRESS)
+     * 최종 약속 장소 확정 (MIDPOINT_CONFIRMED 또는 PLACE_CONFIRMED → PLACE_CONFIRMED)
+     * 호스트가 AI 추천 장소 중 하나를 선택
+     */
+    public void confirmFinalPlace(Double latitude, Double longitude, String placeName) {
+        if (this.status != PromiseStatus.MIDPOINT_CONFIRMED && this.status != PromiseStatus.PLACE_CONFIRMED) {
+            throw new IllegalStateException(
+                    String.format("중간지점 확정 후에만 약속 장소를 확정할 수 있습니다. 현재 상태: %s", this.status));
+        }
+        this.confirmedLatitude = latitude;
+        this.confirmedLongitude = longitude;
+        this.confirmedPlaceName = placeName;
+        this.status = PromiseStatus.PLACE_CONFIRMED;
+    }
+
+    /**
+     * 중간지점 초기화 (MIDPOINT_CONFIRMED 또는 PLACE_CONFIRMED → SELECTING_MIDPOINT)
+     * 호스트가 뒤로가기로 중간지점을 다시 선택할 때 사용. IN_PROGRESS 이전까지만 가능.
+     */
+    public void resetMidpoint() {
+        if (this.status != PromiseStatus.MIDPOINT_CONFIRMED && this.status != PromiseStatus.PLACE_CONFIRMED) {
+            throw new IllegalStateException(
+                    String.format("중간지점 확정 또는 장소 확정 상태에서만 되돌릴 수 있습니다. 현재 상태: %s", this.status));
+        }
+        this.midpointLatitude = null;
+        this.midpointLongitude = null;
+        this.midpointStationName = null;
+        this.confirmedLatitude = null;
+        this.confirmedLongitude = null;
+        this.confirmedPlaceName = null;
+        this.status = PromiseStatus.SELECTING_MIDPOINT;
+    }
+
+    /**
+     * 약속 진행 시작 (PLACE_CONFIRMED → IN_PROGRESS)
      */
     public void startProgress() {
-        validateStatusTransition(PromiseStatus.CONFIRMED, PromiseStatus.IN_PROGRESS);
+        validateStatusTransition(PromiseStatus.PLACE_CONFIRMED, PromiseStatus.IN_PROGRESS);
         this.status = PromiseStatus.IN_PROGRESS;
     }
 

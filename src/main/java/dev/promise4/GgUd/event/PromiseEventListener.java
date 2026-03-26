@@ -46,6 +46,7 @@ public class PromiseEventListener {
         String message = switch (event.getEventType()) {
             case ALL_LOCATIONS_SUBMITTED -> "모든 참여자가 출발지를 입력했습니다";
             case MIDPOINT_CONFIRMED -> "중간 지점이 확정되었습니다: " + info.getConfirmedPlaceName();
+            case PLACE_CONFIRMED -> "약속 장소가 확정되었습니다: " + info.getConfirmedPlaceName();
             case PROMISE_STARTED -> "약속이 시작되었습니다";
             case PROMISE_COMPLETED -> "약속이 완료되었습니다";
             default -> "약속 상태가 변경되었습니다";

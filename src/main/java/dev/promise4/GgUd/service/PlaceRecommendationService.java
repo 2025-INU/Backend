@@ -64,13 +64,16 @@ public class PlaceRecommendationService {
         }
 
         int limit = request.getLimit() != null ? request.getLimit() : 10;
+        String query = (request.getQuery() != null && !request.getQuery().isBlank())
+                ? request.getQuery()
+                : "맛집";
 
-        // 중간지점이 확정된 경우 좌표 전달 (근처 장소 추천에 활용)
-        Double latitude = promise.getConfirmedLatitude();
-        Double longitude = promise.getConfirmedLongitude();
+        // 중간지점 좌표 전달 (근처 장소 추천에 활용)
+        Double latitude = promise.getMidpointLatitude();
+        Double longitude = promise.getMidpointLongitude();
 
         Mono<PlaceRecommendationResponse> mono = aiPlaceRecommendationClient.recommendPlaces(
-                request.getQuery(),
+                query,
                 promiseId,
                 latitude,
                 longitude,

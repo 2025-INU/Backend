@@ -16,7 +16,7 @@ import java.util.List;
 
 /**
  * 약속 상태 자동 전환 스케줄러
- * - CONFIRMED → IN_PROGRESS: 약속 시간 1시간 전 자동 전환
+ * - PLACE_CONFIRMED → IN_PROGRESS: 약속 시간 1시간 전 자동 전환
  * - 출발지 미제출 참여자 알림 (약속 2시간 전)
  */
 @Slf4j
@@ -28,7 +28,7 @@ public class PromiseScheduler {
     private final ParticipantRepository participantRepository;
 
     /**
-     * CONFIRMED 상태 약속 → IN_PROGRESS 자동 전환
+     * PLACE_CONFIRMED 상태 약속 → IN_PROGRESS 자동 전환
      * 약속 시간 1시간 전에 자동으로 진행 상태로 변경
      * 매 1분마다 실행
      */
@@ -38,7 +38,7 @@ public class PromiseScheduler {
         LocalDateTime threshold = LocalDateTime.now().plusHours(1);
 
         List<Promise> promisesToStart = promiseRepository
-                .findByStatusAndPromiseDateTimeBefore(PromiseStatus.CONFIRMED, threshold);
+                .findByStatusAndPromiseDateTimeBefore(PromiseStatus.PLACE_CONFIRMED, threshold);
 
         for (Promise promise : promisesToStart) {
             try {

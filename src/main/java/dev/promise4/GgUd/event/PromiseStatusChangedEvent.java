@@ -17,7 +17,8 @@ public class PromiseStatusChangedEvent extends PromiseEvent {
     private static PromiseEventType getEventType(PromiseStatus status) {
         return switch (status) {
             case SELECTING_MIDPOINT -> PromiseEventType.ALL_LOCATIONS_SUBMITTED;
-            case CONFIRMED -> PromiseEventType.MIDPOINT_CONFIRMED;
+            case MIDPOINT_CONFIRMED -> PromiseEventType.MIDPOINT_CONFIRMED;
+            case PLACE_CONFIRMED -> PromiseEventType.PLACE_CONFIRMED;
             case IN_PROGRESS -> PromiseEventType.PROMISE_STARTED;
             case COMPLETED -> PromiseEventType.PROMISE_COMPLETED;
             default -> PromiseEventType.LOCATION_SUBMITTED;

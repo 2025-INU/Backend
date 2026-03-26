@@ -21,9 +21,14 @@ public enum PromiseStatus {
     SELECTING_MIDPOINT,
 
     /**
-     * 장소 확정됨
+     * 중간지점 확정됨 (지하철역 선택 완료, AI 장소 추천 진행 중)
      */
-    CONFIRMED,
+    MIDPOINT_CONFIRMED,
+
+    /**
+     * 최종 약속 장소 확정됨
+     */
+    PLACE_CONFIRMED,
 
     /**
      * 약속 진행 중
