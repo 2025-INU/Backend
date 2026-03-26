@@ -133,18 +133,37 @@ class PromiseTest {
         }
 
         @Test
-        @DisplayName("장소를 확정할 수 있다")
-        void confirmLocation() {
+        @DisplayName("중간지점을 확정할 수 있다")
+        void confirmMidpointStation() {
             // given
             Promise promise = createPromise();
             promise.startRecruiting();
             promise.startSelectingMidpoint();
 
             // when
-            promise.confirmLocation(37.5665, 126.9780, "서울시청");
+            promise.confirmMidpointStation(37.5665, 126.9780, "서울역");
 
             // then
-            assertThat(promise.getStatus()).isEqualTo(PromiseStatus.CONFIRMED);
+            assertThat(promise.getStatus()).isEqualTo(PromiseStatus.MIDPOINT_CONFIRMED);
+            assertThat(promise.getMidpointLatitude()).isEqualTo(37.5665);
+            assertThat(promise.getMidpointLongitude()).isEqualTo(126.9780);
+            assertThat(promise.getMidpointStationName()).isEqualTo("서울역");
+        }
+
+        @Test
+        @DisplayName("최종 약속 장소를 확정할 수 있다")
+        void confirmFinalPlace() {
+            // given
+            Promise promise = createPromise();
+            promise.startRecruiting();
+            promise.startSelectingMidpoint();
+            promise.confirmMidpointStation(37.5665, 126.9780, "서울역");
+
+            // when
+            promise.confirmFinalPlace(37.5665, 126.9780, "서울시청");
+
+            // then
+            assertThat(promise.getStatus()).isEqualTo(PromiseStatus.PLACE_CONFIRMED);
             assertThat(promise.getConfirmedLatitude()).isEqualTo(37.5665);
             assertThat(promise.getConfirmedLongitude()).isEqualTo(126.9780);
             assertThat(promise.getConfirmedPlaceName()).isEqualTo("서울시청");
@@ -169,8 +188,8 @@ class PromiseTest {
             // given
             Promise promise = createPromise();
 
-            // when & then - CREATED에서 바로 CONFIRMED로 변경 시도
-            assertThatThrownBy(() -> promise.confirmLocation(37.5665, 126.9780, "서울시청"))
+            // when & then - CREATED에서 바로 최종 장소 확정 시도
+            assertThatThrownBy(() -> promise.confirmFinalPlace(37.5665, 126.9780, "서울시청"))
                     .isInstanceOf(IllegalStateException.class);
         }
     }
