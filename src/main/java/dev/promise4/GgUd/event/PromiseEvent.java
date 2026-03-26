@@ -25,6 +25,7 @@ public abstract class PromiseEvent extends ApplicationEvent {
         LOCATION_SUBMITTED, // 출발지 입력 완료
         ALL_LOCATIONS_SUBMITTED, // 모든 출발지 입력 완료
         MIDPOINT_CONFIRMED, // 중간지점 확정
+        PLACE_CONFIRMED, // 최종 약속 장소 확정
         PROMISE_STARTED, // 약속 시작 (IN_PROGRESS)
         PROMISE_COMPLETED // 약속 완료
     }

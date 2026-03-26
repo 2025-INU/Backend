@@ -2,6 +2,7 @@ package dev.promise4.GgUd.service;
 
 import dev.promise4.GgUd.controller.dto.*;
 import dev.promise4.GgUd.entity.*;
+import dev.promise4.GgUd.repository.AiPlaceRecommendationsRepository;
 import dev.promise4.GgUd.repository.ParticipantRepository;
 import dev.promise4.GgUd.repository.PromiseRepository;
 import dev.promise4.GgUd.repository.SubwayStationRepository;
@@ -27,6 +28,7 @@ public class MidpointService {
     private final SubwayStationRepository subwayStationRepository;
     private final MidpointCalculationService midpointCalculationService;
     private final KakaoDirectionsService kakaoDirectionsService;
+    private final AiPlaceRecommendationsRepository aiPlaceRecommendationsRepository;
 
     /**
      * 중간지점 추천 조회
@@ -134,22 +136,57 @@ public class MidpointService {
         Promise promise = promiseRepository.findById(promiseId)
                 .orElseThrow(() -> new IllegalArgumentException("약속을 찾을 수 없습니다"));
 
-        // 호스트 확인
         if (!promise.getHost().getId().equals(userId)) {
             throw new IllegalStateException("호스트만 확정할 수 있습니다");
         }
 
         if (promise.getStatus() != PromiseStatus.SELECTING_MIDPOINT) {
-            throw new IllegalStateException("확정 가능한 단계가 아닙니다");
+            throw new IllegalStateException("중간지점 선택 단계에서만 확정할 수 있습니다. 현재 상태: " + promise.getStatus());
         }
 
         SubwayStation station = subwayStationRepository.findById(stationId)
                 .orElseThrow(() -> new IllegalArgumentException("역을 찾을 수 없습니다"));
 
-        // 확정
-        promise.confirmLocation(station.getLatitude(), station.getLongitude(), station.getStationName());
+        promise.confirmMidpointStation(station.getLatitude(), station.getLongitude(), station.getStationName());
 
         log.info("Midpoint confirmed: promiseId={}, stationId={}, stationName={}",
                 promiseId, stationId, station.getStationName());
+    }
+
+    /**
+     * 중간지점 초기화 (호스트 전용) - IN_PROGRESS 이전까지만 가능
+     * AI 추천 캐시도 함께 삭제
+     */
+    @Transactional
+    public void resetMidpoint(Long promiseId, Long userId) {
+        Promise promise = promiseRepository.findById(promiseId)
+                .orElseThrow(() -> new IllegalArgumentException("약속을 찾을 수 없습니다"));
+
+        if (!promise.getHost().getId().equals(userId)) {
+            throw new IllegalStateException("호스트만 중간지점을 변경할 수 있습니다");
+        }
+
+        promise.resetMidpoint();
+        aiPlaceRecommendationsRepository.deleteByPromiseId(promiseId);
+
+        log.info("Midpoint reset: promiseId={}, hostId={}", promiseId, userId);
+    }
+
+    /**
+     * 최종 약속 장소 확정 (호스트 전용)
+     * AI 추천 장소 중 하나를 선택하여 확정
+     */
+    @Transactional
+    public void confirmFinalPlace(Long promiseId, Long userId, ConfirmFinalPlaceRequest request) {
+        Promise promise = promiseRepository.findById(promiseId)
+                .orElseThrow(() -> new IllegalArgumentException("약속을 찾을 수 없습니다"));
+
+        if (!promise.getHost().getId().equals(userId)) {
+            throw new IllegalStateException("호스트만 약속 장소를 확정할 수 있습니다");
+        }
+
+        promise.confirmFinalPlace(request.getLatitude(), request.getLongitude(), request.getPlaceName());
+
+        log.info("Final place confirmed: promiseId={}, placeName={}", promiseId, request.getPlaceName());
     }
 }
