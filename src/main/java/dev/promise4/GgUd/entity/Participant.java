@@ -56,6 +56,9 @@ public class Participant extends BaseTimeEntity {
     @Column(name = "joined_at", nullable = false)
     private LocalDateTime joinedAt;
 
+    @Column(name = "arrived_at")
+    private LocalDateTime arrivedAt;
+
     /**
      * Builder 커스텀: joinedAt 자동 생성
      */
@@ -71,5 +74,21 @@ public class Participant extends BaseTimeEntity {
         this.departureLongitude = longitude;
         this.departureAddress = address;
         this.isLocationSubmitted = true;
+    }
+
+    /**
+     * 도착 처리
+     */
+    public void markAsArrived() {
+        if (this.arrivedAt == null) {
+            this.arrivedAt = LocalDateTime.now();
+        }
+    }
+
+    /**
+     * 도착 여부
+     */
+    public boolean isArrived() {
+        return this.arrivedAt != null;
     }
 }

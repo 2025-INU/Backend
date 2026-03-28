@@ -69,4 +69,9 @@ public interface ParticipantRepository extends JpaRepository<Participant, Long> 
     @Query("SELECT p FROM Participant p LEFT JOIN FETCH p.user " +
             "WHERE p.promise.id = :promiseId AND p.isLocationSubmitted = false")
     List<Participant> findByPromiseIdAndLocationNotSubmitted(@Param("promiseId") Long promiseId);
+
+    /**
+     * 도착한 참여자 수 조회
+     */
+    long countByPromiseIdAndArrivedAtIsNotNull(Long promiseId);
 }
