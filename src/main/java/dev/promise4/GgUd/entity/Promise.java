@@ -4,8 +4,8 @@ import dev.promise4.GgUd.common.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 /**
  * 약속 엔티티
@@ -44,7 +44,7 @@ public class Promise extends BaseTimeEntity {
     @Builder.Default
     private PromiseStatus status = PromiseStatus.CREATED;
 
-    @Column(name = "invite_code", nullable = false, unique = true, length = 36)
+    @Column(name = "invite_code", nullable = false, unique = true, length = 6)
     private String inviteCode;
 
     @Column(name = "invite_expired_at", nullable = false)
@@ -85,8 +85,19 @@ public class Promise extends BaseTimeEntity {
      * Builder 커스텀: inviteCode와 inviteExpiredAt 자동 생성
      */
     public static class PromiseBuilder {
-        private String inviteCode = UUID.randomUUID().toString();
+        private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        private static final SecureRandom RANDOM = new SecureRandom();
+
+        private String inviteCode = generateInviteCode();
         private LocalDateTime inviteExpiredAt = LocalDateTime.now().plusHours(24);
+
+        private static String generateInviteCode() {
+            StringBuilder sb = new StringBuilder(6);
+            for (int i = 0; i < 6; i++) {
+                sb.append(CHARACTERS.charAt(RANDOM.nextInt(CHARACTERS.length())));
+            }
+            return sb.toString();
+        }
     }
 
     /**

@@ -8,6 +8,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 사용자 서비스
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final S3Service s3Service;
 
     /**
      * 사용자 ID로 조회 (캐시 적용)
@@ -64,6 +66,27 @@ public class UserService {
         user.updateProfile(nickname, user.getEmail(), profileImageUrl);
         log.info("User profile updated: userId={}, nickname={}", userId, nickname);
 
+        return user;
+    }
+
+    /**
+     * 프로필 이미지 업로드 (S3) 및 URL 저장
+     */
+    @CacheEvict(value = "users", key = "#userId")
+    @Transactional
+    public User uploadProfileImage(Long userId, MultipartFile file) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + userId));
+
+        // 기존 S3 이미지 삭제 (카카오 기본 이미지는 삭제 안함)
+        String oldUrl = user.getProfileImageUrl();
+        if (oldUrl != null && oldUrl.contains(".amazonaws.com/")) {
+            s3Service.deleteImage(oldUrl);
+        }
+
+        String newUrl = s3Service.uploadProfileImage(userId, file);
+        user.updateProfile(user.getNickname(), user.getEmail(), newUrl);
+        log.info("Profile image updated: userId={}", userId);
         return user;
     }
 

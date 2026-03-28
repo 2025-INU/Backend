@@ -14,9 +14,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 사용자 API
@@ -63,6 +65,25 @@ public class UserController {
 
         log.debug("PATCH /api/v1/users/me - userId: {}", userId);
         User user = userService.updateProfile(userId, request.getNickname(), request.getProfileImageUrl());
+        return ResponseEntity.ok(UserResponse.from(user));
+    }
+
+    /**
+     * 프로필 이미지 업로드
+     */
+    @PostMapping(value = "/me/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "프로필 이미지 업로드", description = "사용자 프로필 이미지를 S3에 업로드합니다. (최대 5MB, jpg/png/gif)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "업로드 성공", content = @Content(schema = @Schema(implementation = UserResponse.class))),
+            @ApiResponse(responseCode = "400", description = "잘못된 파일"),
+            @ApiResponse(responseCode = "401", description = "인증 필요")
+    })
+    public ResponseEntity<UserResponse> uploadProfileImage(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+            @RequestPart("image") MultipartFile image) {
+
+        log.debug("POST /api/v1/users/me/profile-image - userId: {}", userId);
+        User user = userService.uploadProfileImage(userId, image);
         return ResponseEntity.ok(UserResponse.from(user));
     }
 }
