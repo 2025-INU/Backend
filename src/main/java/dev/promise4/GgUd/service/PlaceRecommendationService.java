@@ -93,7 +93,12 @@ public class PlaceRecommendationService {
                 latitude,
                 longitude,
                 limit,
-                tab
+                tab,
+                null,
+                null,
+                null,
+                null,
+                null
         );
 
         PlaceRecommendationResponse response = mono.block();
