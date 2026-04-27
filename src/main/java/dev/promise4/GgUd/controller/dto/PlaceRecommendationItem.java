@@ -41,7 +41,27 @@ public class PlaceRecommendationItem {
     @Schema(description = "AI 점수 (0~100)")
     private Double aiScore;
 
+    @JsonProperty("similarity_score")
+    @Schema(description = "유사도 raw 점수")
+    private Double similarityScore;
+
     @JsonProperty("distance_from_midpoint")
     @Schema(description = "중간지점으로부터의 거리 (km)")
     private Double distanceFromMidpoint;
+
+    @JsonProperty("distance_score")
+    @Schema(description = "거리 점수 (0~1)")
+    private Double distanceScore;
+
+    @JsonProperty("personalization_score")
+    @Schema(description = "개인화 점수 (0~1)")
+    private Double personalizationScore;
+
+    @JsonProperty("final_score")
+    @Schema(description = "최종 재랭킹 점수 (0~1)")
+    private Double finalScore;
+
+    @JsonProperty("recommendation_reason")
+    @Schema(description = "추천 사유")
+    private String recommendationReason;
 }

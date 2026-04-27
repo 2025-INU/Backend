@@ -1,6 +1,7 @@
 package dev.promise4.GgUd.client;
 
 import dev.promise4.GgUd.controller.dto.PlaceRecommendationResponse;
+import dev.promise4.GgUd.controller.dto.PlaceRecommendationTab;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -10,6 +11,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono;
 
 import java.util.Map;
+import java.util.List;
 
 /**
  * AI 서버 장소 추천 API 클라이언트
@@ -37,7 +39,13 @@ public class AiPlaceRecommendationClient {
             Long promiseId,
             Double latitude,
             Double longitude,
-            int limit) {
+            int limit,
+            PlaceRecommendationTab tab,
+            String contextSummary,
+            String timeSlot,
+            List<String> preferredCategories,
+            List<String> preferredRegions,
+            Integer participantCount) {
 
         Map<String, Object> body = new java.util.HashMap<>(Map.of(
                 "query", query,
@@ -49,6 +57,24 @@ public class AiPlaceRecommendationClient {
         if (latitude != null && longitude != null) {
             body.put("latitude", latitude);
             body.put("longitude", longitude);
+        }
+        if (tab != null) {
+            body.put("tab", tab.name());
+        }
+        if (contextSummary != null && !contextSummary.isBlank()) {
+            body.put("context_summary", contextSummary);
+        }
+        if (timeSlot != null && !timeSlot.isBlank()) {
+            body.put("time_slot", timeSlot);
+        }
+        if (preferredCategories != null && !preferredCategories.isEmpty()) {
+            body.put("preferred_categories", preferredCategories);
+        }
+        if (preferredRegions != null && !preferredRegions.isEmpty()) {
+            body.put("preferred_regions", preferredRegions);
+        }
+        if (participantCount != null) {
+            body.put("participant_count", participantCount);
         }
 
         return aiServerWebClient.post()
