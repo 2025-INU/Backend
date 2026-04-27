@@ -70,8 +70,23 @@ public class AiPlaceRecommendationsEntity {
     @Column(name = "ai_score", precision = 5, scale = 2)
     private BigDecimal aiScore;
 
+    @Column(name = "similarity_score", precision = 8, scale = 4)
+    private BigDecimal similarityScore;
+
     @Column(name = "distance_from_midpoint", precision = 10, scale = 2)
     private BigDecimal distanceFromMidpoint;
+
+    @Column(name = "distance_score", precision = 6, scale = 4)
+    private BigDecimal distanceScore;
+
+    @Column(name = "personalization_score", precision = 6, scale = 4)
+    private BigDecimal personalizationScore;
+
+    @Column(name = "final_score", precision = 6, scale = 4)
+    private BigDecimal finalScore;
+
+    @Column(name = "recommendation_reason", length = 255)
+    private String recommendationReason;
 
     @Column(name = "phone_number", length = 20)
     private String phoneNumber;

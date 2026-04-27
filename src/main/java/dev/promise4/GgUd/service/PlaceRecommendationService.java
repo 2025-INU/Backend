@@ -4,6 +4,7 @@ import dev.promise4.GgUd.client.AiPlaceRecommendationClient;
 import dev.promise4.GgUd.controller.dto.PlaceRecommendationRequest;
 import dev.promise4.GgUd.controller.dto.PlaceRecommendationResponse;
 import dev.promise4.GgUd.controller.dto.PlaceRecommendationItem;
+import dev.promise4.GgUd.controller.dto.PlaceRecommendationTab;
 import dev.promise4.GgUd.entity.AiPlaceRecommendationsEntity;
 import dev.promise4.GgUd.entity.Promise;
 import dev.promise4.GgUd.repository.ParticipantRepository;
@@ -13,7 +14,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
+
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * AI 기반 장소 추천 서비스
@@ -22,7 +27,6 @@ import reactor.core.publisher.Mono;
 @Service
 @RequiredArgsConstructor
 public class PlaceRecommendationService {
-
     private final PromiseRepository promiseRepository;
     private final ParticipantRepository participantRepository;
     private final AiPlaceRecommendationClient aiPlaceRecommendationClient;
@@ -49,24 +53,35 @@ public class PlaceRecommendationService {
             throw new IllegalStateException("해당 약속의 참여자만 장소 추천을 요청할 수 있습니다");
         }
 
+        PlaceRecommendationTab tab = request.getTab() != null ? request.getTab() : PlaceRecommendationTab.ALL;
+        boolean hasQuery = StringUtils.hasText(request.getQuery());
+
         // 1. forceRefresh가 아니면 캐싱된 추천이 있으면 그대로 반환
-        if (!Boolean.TRUE.equals(request.getForceRefresh())) {
+        // query 기반 추천은 탭 필터 결과가 달라지므로 캐시를 우회한다.
+        if (!Boolean.TRUE.equals(request.getForceRefresh()) && !hasQuery && tab == PlaceRecommendationTab.ALL) {
             var cached = aiPlaceRecommendationsRepository.findByPromiseIdOrderByRankingAsc(promiseId);
             if (!cached.isEmpty()) {
                 log.debug("Found {} cached AI place recommendations for promiseId={}", cached.size(), promiseId);
                 var items = cached.stream()
                         .map(this::toDto)
+                        .sorted(Comparator.comparing(
+                                PlaceRecommendationItem::getDistanceFromMidpoint,
+                                Comparator.nullsLast(Double::compareTo)
+                        ))
                         .toList();
                 return new PlaceRecommendationResponse(promiseId, items);
             }
         } else {
-            log.debug("forceRefresh=true, skipping cache for promiseId={}", promiseId);
+            log.debug("cache bypassed for promiseId={}, hasQuery={}, tab={}, forceRefresh={}",
+                    promiseId, hasQuery, tab, request.getForceRefresh());
         }
 
         int limit = request.getLimit() != null ? request.getLimit() : 10;
+        // 기본 추천에서는 쿼리를 강제하지 않는다.
+        // 사용자가 입력했을 때만 쿼리를 전달한다.
         String query = (request.getQuery() != null && !request.getQuery().isBlank())
                 ? request.getQuery()
-                : "맛집";
+                : "";
 
         // 중간지점 좌표 전달 (근처 장소 추천에 활용)
         Double latitude = promise.getMidpointLatitude();
@@ -77,7 +92,13 @@ public class PlaceRecommendationService {
                 promiseId,
                 latitude,
                 longitude,
-                limit
+                limit,
+                tab,
+                null,
+                null,
+                null,
+                null,
+                null
         );
 
         PlaceRecommendationResponse response = mono.block();
@@ -87,21 +108,41 @@ public class PlaceRecommendationService {
         }
 
         response.setPromiseId(promiseId);
+        List<PlaceRecommendationItem> filtered = sortAndLimit(response.getRecommendations(), limit);
+        response.setRecommendations(filtered);
 
-        // 2. 새로 받은 추천 결과를 캐싱
-        aiPlaceRecommendationsRepository.deleteByPromiseId(promiseId);
-        if (response.getRecommendations() != null && !response.getRecommendations().isEmpty()) {
-            var entities = java.util.stream.IntStream.range(0, response.getRecommendations().size())
-                    .mapToObj(i -> {
-                        PlaceRecommendationItem item = response.getRecommendations().get(i);
-                        return toEntity(promiseId, i + 1, item);
-                    })
-                    .toList();
-            aiPlaceRecommendationsRepository.saveAll(entities);
-            log.debug("Saved {} AI place recommendations for promiseId={}", entities.size(), promiseId);
+        // 2. 기본 탭 + 기본 추천(쿼리 미입력)일 때만 캐싱
+        if (!hasQuery && tab == PlaceRecommendationTab.ALL) {
+            aiPlaceRecommendationsRepository.deleteByPromiseId(promiseId);
+            if (!response.getRecommendations().isEmpty()) {
+                var entities = java.util.stream.IntStream.range(0, response.getRecommendations().size())
+                        .mapToObj(i -> {
+                            PlaceRecommendationItem item = response.getRecommendations().get(i);
+                            return toEntity(promiseId, i + 1, item);
+                        })
+                        .toList();
+                aiPlaceRecommendationsRepository.saveAll(entities);
+                log.debug("Saved {} AI place recommendations for promiseId={}", entities.size(), promiseId);
+            }
         }
 
         return response;
+    }
+
+    private List<PlaceRecommendationItem> sortAndLimit(
+            List<PlaceRecommendationItem> items,
+            int limit
+    ) {
+        if (items == null || items.isEmpty()) {
+            return List.of();
+        }
+        return items.stream()
+                .sorted(Comparator.comparing(
+                        PlaceRecommendationItem::getDistanceFromMidpoint,
+                        Comparator.nullsLast(Double::compareTo)
+                ))
+                .limit(limit)
+                .toList();
     }
 
     private PlaceRecommendationItem toDto(AiPlaceRecommendationsEntity entity) {

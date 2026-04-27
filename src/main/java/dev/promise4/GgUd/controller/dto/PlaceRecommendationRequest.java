@@ -30,4 +30,7 @@ public class PlaceRecommendationRequest {
 
     @Schema(description = "true면 캐시 무시하고 AI에서 새로 추천 받음 (다시 추천 받기)", example = "false")
     private Boolean forceRefresh = false;
+
+    @Schema(description = "추천 탭 (ALL, RESTAURANT, CAFE, BAR)", example = "ALL")
+    private PlaceRecommendationTab tab = PlaceRecommendationTab.ALL;
 }
