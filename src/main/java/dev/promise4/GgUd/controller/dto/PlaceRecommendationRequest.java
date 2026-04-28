@@ -1,8 +1,6 @@
 package dev.promise4.GgUd.controller.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -22,14 +20,6 @@ public class PlaceRecommendationRequest {
     @Size(max = 200)
     @Schema(description = "자연어 요청 (예: 친구들이랑 분위기 좋은 카페). 미입력 시 '맛집'으로 자동 설정됩니다.")
     private String query;
-
-    @Min(1)
-    @Max(20)
-    @Schema(description = "추천 개수 (1~20, 기본 10)", example = "10")
-    private Integer limit = 10;
-
-    @Schema(description = "true면 캐시 무시하고 AI에서 새로 추천 받음 (다시 추천 받기)", example = "false")
-    private Boolean forceRefresh = false;
 
     @Schema(description = "추천 탭 (ALL, RESTAURANT, CAFE, BAR)", example = "ALL")
     private PlaceRecommendationTab tab = PlaceRecommendationTab.ALL;
