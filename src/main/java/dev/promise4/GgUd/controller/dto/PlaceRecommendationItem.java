@@ -37,6 +37,10 @@ public class PlaceRecommendationItem {
     @Schema(description = "대표 이미지 URL")
     private String imageUrl;
 
+    @JsonProperty("ai_summary")
+    @Schema(description = "네이버 지도 AI 요약 문구")
+    private String aiSummary;
+
     @Schema(description = "위도")
     private Double latitude;
 

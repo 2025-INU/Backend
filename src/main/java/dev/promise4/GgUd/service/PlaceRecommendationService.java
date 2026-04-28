@@ -152,6 +152,7 @@ public class PlaceRecommendationService {
         item.setCategory(entity.getCategory());
         item.setAddress(entity.getAddress());
         item.setImageUrl(entity.getImageUrl());
+        item.setAiSummary(entity.getAiSummary());
         item.setLatitude(entity.getLatitude() != null ? entity.getLatitude().doubleValue() : null);
         item.setLongitude(entity.getLongitude() != null ? entity.getLongitude().doubleValue() : null);
         item.setAiScore(entity.getAiScore() != null ? entity.getAiScore().doubleValue() : null);
@@ -169,6 +170,7 @@ public class PlaceRecommendationService {
                 .category(item.getCategory())
                 .address(item.getAddress())
                 .imageUrl(item.getImageUrl())
+                .aiSummary(item.getAiSummary())
                 .latitude(item.getLatitude() != null ? java.math.BigDecimal.valueOf(item.getLatitude()) : null)
                 .longitude(item.getLongitude() != null ? java.math.BigDecimal.valueOf(item.getLongitude()) : null)
                 .ranking(ranking)
