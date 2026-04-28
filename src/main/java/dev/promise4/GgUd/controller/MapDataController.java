@@ -3,7 +3,7 @@ package dev.promise4.GgUd.controller;
 import dev.promise4.GgUd.controller.dto.Coordinate;
 import dev.promise4.GgUd.controller.dto.DirectionsResponse;
 import dev.promise4.GgUd.controller.dto.MapDataResponse;
-import dev.promise4.GgUd.service.KakaoDirectionsService;
+import dev.promise4.GgUd.service.TMapDirectionsService;
 import dev.promise4.GgUd.service.MapDataService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.*;
 public class MapDataController {
 
     private final MapDataService mapDataService;
-    private final KakaoDirectionsService kakaoDirectionsService;
+    private final TMapDirectionsService tMapDirectionsService;
 
     /**
      * 지도 데이터 조회
@@ -68,7 +68,7 @@ public class MapDataController {
         Coordinate origin = Coordinate.of(originLat, originLon);
         Coordinate destination = Coordinate.of(destLat, destLon);
 
-        DirectionsResponse response = kakaoDirectionsService.getDirections(origin, destination).block();
+        DirectionsResponse response = tMapDirectionsService.getDirections(origin, destination).block();
         return ResponseEntity.ok(response);
     }
 }

@@ -34,6 +34,12 @@ public class DirectionsResponse {
         @Schema(description = "총 거리 (m)", example = "12500")
         private int totalDistance;
 
+        @Schema(description = "총 요금 (원)", example = "1200")
+        private int totalFare;
+
+        @Schema(description = "환승 횟수", example = "1")
+        private int transferCount;
+
         @Schema(description = "경로 단계 목록")
         private List<RouteStep> routes;
     }
@@ -59,6 +65,9 @@ public class DirectionsResponse {
 
         @Schema(description = "노선 정보 (대중교통의 경우)")
         private String lineName;
+
+        @Schema(description = "경로 좌표 문자열 (공백 구분, 'lon,lat' 형식) - 지도 폴리라인 표시용")
+        private String linestring;
     }
 
     public enum TransportType {

@@ -61,3 +61,7 @@ docs/
 *.crt
 *.p12
 ssl/
+
+# AI 에이전트
+.claude/
+.mcp.json

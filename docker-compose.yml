@@ -73,6 +73,9 @@ services:
       # AI Server
       - AI_SERVER_URL=${AI_SERVER_URL}
 
+      # TMap API
+      - TMAP_APP_KEY=${TMAP_APP_KEY}
+
       # AWS S3
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}

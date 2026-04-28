@@ -164,3 +164,11 @@ kakao:
   api:
     rest-api-key: ${KAKAO_REST_API_KEY:}
     javascript-key: ${KAKAO_JAVASCRIPT_KEY:}
+
+# TMap API Configuration
+tmap:
+  api:
+    app-key: ${TMAP_APP_KEY:}
+    base-url: https://apis.openapi.sk.com
+    connect-timeout: 5000
+    read-timeout: 10000
