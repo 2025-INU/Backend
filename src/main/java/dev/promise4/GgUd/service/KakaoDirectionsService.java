@@ -11,6 +11,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -54,9 +55,7 @@ public class KakaoDirectionsService {
                 .onErrorResume(e -> {
                     log.error("Failed to get directions: {}", e.getMessage());
                     return Mono.just(DirectionsResponse.builder()
-                            .totalDuration(0)
-                            .totalDistance(0)
-                            .routes(List.of())
+                            .routeOptions(List.of())
                             .build());
                 });
     }
@@ -91,7 +90,7 @@ public class KakaoDirectionsService {
      */
     private void cacheDirections(String cacheKey, DirectionsResponse response) {
         try {
-            if (response.getTotalDuration() > 0) {  // 유효한 응답만 캐싱
+            if (response.getRouteOptions() != null && !response.getRouteOptions().isEmpty()) {
                 redisTemplate.opsForValue().set(cacheKey, response, DIRECTIONS_CACHE_TTL);
                 log.debug("Directions cached: {}", cacheKey);
             }
@@ -101,7 +100,7 @@ public class KakaoDirectionsService {
     }
 
     /**
-     * 카카오 API 응답 파싱
+     * 카카오 API 응답 파싱 - 전체 경로를 소요 시간 오름차순으로 반환
      */
     @SuppressWarnings("unchecked")
     private DirectionsResponse parseDirectionsResponse(Map<String, Object> response) {
@@ -110,47 +109,52 @@ public class KakaoDirectionsService {
 
             if (routes == null || routes.isEmpty()) {
                 return DirectionsResponse.builder()
-                        .totalDuration(0)
-                        .totalDistance(0)
-                        .routes(List.of())
+                        .routeOptions(List.of())
                         .build();
             }
 
-            Map<String, Object> route = routes.get(0);
-            Map<String, Object> summary = (Map<String, Object>) route.get("summary");
+            List<DirectionsResponse.RouteOption> routeOptions = new ArrayList<>();
 
-            int totalDuration = ((Number) summary.getOrDefault("duration", 0)).intValue() / 60; // 초 -> 분
-            int totalDistance = ((Number) summary.getOrDefault("distance", 0)).intValue();
+            for (Map<String, Object> route : routes) {
+                Map<String, Object> summary = (Map<String, Object>) route.get("summary");
 
-            List<Map<String, Object>> sections = (List<Map<String, Object>>) route.get("sections");
-            List<DirectionsResponse.RouteStep> routeSteps = new ArrayList<>();
+                int totalDuration = ((Number) summary.getOrDefault("duration", 0)).intValue() / 60;
+                int totalDistance = ((Number) summary.getOrDefault("distance", 0)).intValue();
 
-            if (sections != null) {
-                for (Map<String, Object> section : sections) {
-                    int duration = ((Number) section.getOrDefault("duration", 0)).intValue() / 60;
-                    int distance = ((Number) section.getOrDefault("distance", 0)).intValue();
+                List<Map<String, Object>> sections = (List<Map<String, Object>>) route.get("sections");
+                List<DirectionsResponse.RouteStep> routeSteps = new ArrayList<>();
 
-                    routeSteps.add(DirectionsResponse.RouteStep.builder()
-                            .type(DirectionsResponse.TransportType.WALK)
-                            .instruction("이동")
-                            .duration(duration)
-                            .distance(distance)
-                            .build());
+                if (sections != null) {
+                    for (Map<String, Object> section : sections) {
+                        int duration = ((Number) section.getOrDefault("duration", 0)).intValue() / 60;
+                        int distance = ((Number) section.getOrDefault("distance", 0)).intValue();
+
+                        routeSteps.add(DirectionsResponse.RouteStep.builder()
+                                .type(DirectionsResponse.TransportType.WALK)
+                                .instruction("이동")
+                                .duration(duration)
+                                .distance(distance)
+                                .build());
+                    }
                 }
+
+                routeOptions.add(DirectionsResponse.RouteOption.builder()
+                        .totalDuration(totalDuration)
+                        .totalDistance(totalDistance)
+                        .routes(routeSteps)
+                        .build());
             }
 
+            routeOptions.sort(Comparator.comparingInt(DirectionsResponse.RouteOption::getTotalDuration));
+
             return DirectionsResponse.builder()
-                    .totalDuration(totalDuration)
-                    .totalDistance(totalDistance)
-                    .routes(routeSteps)
+                    .routeOptions(routeOptions)
                     .build();
 
         } catch (Exception e) {
             log.error("Failed to parse directions response: {}", e.getMessage());
             return DirectionsResponse.builder()
-                    .totalDuration(0)
-                    .totalDistance(0)
-                    .routes(List.of())
+                    .routeOptions(List.of())
                     .build();
         }
     }
