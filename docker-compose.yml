@@ -59,7 +59,7 @@ services:
       - SPRING_CACHE_TYPE=redis
       - SPRING_CACHE_REDIS_TIME_TO_LIVE=3600000
 
-      # JWT Configuration
+      # JWT Configurationㅛ
       - JWT_SECRET=${JWT_SECRET}
       - JWT_ACCESS_TOKEN_EXPIRATION=3600000
       - JWT_REFRESH_TOKEN_EXPIRATION=604800000
@@ -72,6 +72,12 @@ services:
 
       # AI Server
       - AI_SERVER_URL=${AI_SERVER_URL}
+
+      # AWS S3
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION}
+      - AWS_S3_BUCKET=${AWS_S3_BUCKET}
 
       # Actuator
       - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info,metrics,prometheus

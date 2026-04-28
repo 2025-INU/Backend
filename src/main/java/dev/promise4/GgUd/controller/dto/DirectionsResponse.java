@@ -18,14 +18,25 @@ import java.util.List;
 @Schema(description = "길찾기 응답")
 public class DirectionsResponse {
 
-    @Schema(description = "총 소요 시간 (분)", example = "45")
-    private int totalDuration;
+    @Schema(description = "경로 목록 (소요 시간 오름차순)")
+    private List<RouteOption> routeOptions;
 
-    @Schema(description = "총 거리 (m)", example = "12500")
-    private int totalDistance;
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    @Schema(description = "경로 옵션")
+    public static class RouteOption {
 
-    @Schema(description = "경로 단계 목록")
-    private List<RouteStep> routes;
+        @Schema(description = "총 소요 시간 (분)", example = "45")
+        private int totalDuration;
+
+        @Schema(description = "총 거리 (m)", example = "12500")
+        private int totalDistance;
+
+        @Schema(description = "경로 단계 목록")
+        private List<RouteStep> routes;
+    }
 
     @Getter
     @NoArgsConstructor
@@ -51,9 +62,9 @@ public class DirectionsResponse {
     }
 
     public enum TransportType {
-        WALK, // 도보
-        BUS, // 버스
-        SUBWAY, // 지하철
-        TRANSFER // 환승
+        WALK,
+        BUS,
+        SUBWAY,
+        TRANSFER
     }
 }

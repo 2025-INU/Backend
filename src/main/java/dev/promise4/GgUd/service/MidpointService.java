@@ -100,13 +100,18 @@ public class MidpointService {
                             participant.getDepartureLongitude());
 
                     return kakaoDirectionsService.getDirections(origin, destination)
-                            .map(directions -> ParticipantTravelInfo.builder()
-                                    .userId(participant.getUser().getId())
-                                    .nickname(participant.getUser().getNickname())
-                                    .departureAddress(participant.getDepartureAddress())
-                                    .travelTimeMinutes(directions.getTotalDuration())
-                                    .distanceMeters(directions.getTotalDistance())
-                                    .build())
+                            .map(directions -> {
+                                // 소요 시간 오름차순 정렬된 첫 번째 경로(최단 시간) 사용
+                                DirectionsResponse.RouteOption best = directions.getRouteOptions().isEmpty()
+                                        ? null : directions.getRouteOptions().get(0);
+                                return ParticipantTravelInfo.builder()
+                                        .userId(participant.getUser().getId())
+                                        .nickname(participant.getUser().getNickname())
+                                        .departureAddress(participant.getDepartureAddress())
+                                        .travelTimeMinutes(best != null ? best.getTotalDuration() : 0)
+                                        .distanceMeters(best != null ? best.getTotalDistance() : 0)
+                                        .build();
+                            })
                             .onErrorResume(e -> {
                                 log.warn("Failed to get directions for participant {}: {}",
                                         participant.getUser().getId(), e.getMessage());
