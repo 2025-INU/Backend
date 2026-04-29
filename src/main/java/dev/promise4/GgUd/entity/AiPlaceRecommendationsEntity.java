@@ -61,6 +61,9 @@ public class AiPlaceRecommendationsEntity {
     @Column(name = "image_url", columnDefinition = "TEXT")
     private String imageUrl;
 
+    @Column(name = "ai_summary", columnDefinition = "TEXT")
+    private String aiSummary;
+
     @Column(nullable = false, precision = 10, scale = 8)
     private BigDecimal latitude;
 

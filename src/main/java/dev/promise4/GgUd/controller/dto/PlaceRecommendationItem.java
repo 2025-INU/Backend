@@ -1,6 +1,7 @@
 package dev.promise4.GgUd.controller.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -36,6 +37,11 @@ public class PlaceRecommendationItem {
     @JsonProperty("image_url")
     @Schema(description = "대표 이미지 URL")
     private String imageUrl;
+
+    @JsonProperty("ai_summary")
+    @JsonInclude(JsonInclude.Include.ALWAYS)
+    @Schema(description = "네이버 지도 AI 요약 문구")
+    private String aiSummary;
 
     @Schema(description = "위도")
     private Double latitude;
