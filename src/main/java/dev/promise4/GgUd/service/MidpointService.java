@@ -27,7 +27,7 @@ public class MidpointService {
     private final ParticipantRepository participantRepository;
     private final SubwayStationRepository subwayStationRepository;
     private final MidpointCalculationService midpointCalculationService;
-    private final KakaoDirectionsService kakaoDirectionsService;
+    private final TMapDirectionsService tMapDirectionsService;
     private final AiPlaceRecommendationsRepository aiPlaceRecommendationsRepository;
 
     /**
@@ -63,7 +63,7 @@ public class MidpointService {
         // 가까운 역 5개 찾기
         List<StationDistance> nearestStations = midpointCalculationService.findNearestStations(midpoint, 5);
 
-        // 추천 결과 생성 (카카오 API로 이동시간 조회)
+        // 추천 결과 생성 (TMap API로 이동시간 조회)
         List<StationRecommendation> recommendations = nearestStations.stream()
                 .map(sd -> {
                     List<ParticipantTravelInfo> travelInfos = getTravelInfosForStation(
@@ -87,19 +87,19 @@ public class MidpointService {
     }
 
     /**
-     * 특정 역까지 각 참여자의 이동 정보 조회 (카카오 API)
+     * 특정 역까지 각 참여자의 이동 정보 조회 (TMap API)
      */
     private List<ParticipantTravelInfo> getTravelInfosForStation(SubwayStation station, List<Participant> participants) {
         Coordinate destination = Coordinate.of(station.getLatitude(), station.getLongitude());
 
-        // 모든 참여자에 대해 병렬로 카카오 API 호출
+        // 모든 참여자에 대해 병렬로 TMap API 호출
         List<Mono<ParticipantTravelInfo>> travelInfoMonos = participants.stream()
                 .map(participant -> {
                     Coordinate origin = Coordinate.of(
                             participant.getDepartureLatitude(),
                             participant.getDepartureLongitude());
 
-                    return kakaoDirectionsService.getDirections(origin, destination)
+                    return tMapDirectionsService.getDirections(origin, destination)
                             .map(directions -> {
                                 // 소요 시간 오름차순 정렬된 첫 번째 경로(최단 시간) 사용
                                 DirectionsResponse.RouteOption best = directions.getRouteOptions().isEmpty()
