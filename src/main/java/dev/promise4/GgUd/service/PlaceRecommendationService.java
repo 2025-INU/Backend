@@ -7,6 +7,7 @@ import dev.promise4.GgUd.controller.dto.PlaceRecommendationItem;
 import dev.promise4.GgUd.controller.dto.PlaceRecommendationTab;
 import dev.promise4.GgUd.entity.AiPlaceRecommendationsEntity;
 import dev.promise4.GgUd.entity.Promise;
+import dev.promise4.GgUd.entity.UserQueryHistory;
 import dev.promise4.GgUd.repository.ParticipantRepository;
 import dev.promise4.GgUd.repository.PromiseRepository;
 import dev.promise4.GgUd.repository.AiPlaceRecommendationsRepository;
@@ -31,6 +32,7 @@ public class PlaceRecommendationService {
     private final ParticipantRepository participantRepository;
     private final AiPlaceRecommendationClient aiPlaceRecommendationClient;
     private final AiPlaceRecommendationsRepository aiPlaceRecommendationsRepository;
+    private final UserHistoryService userHistoryService;
 
     /**
      * 사용자 맞춤 장소 추천 (AI 서버 호출)
@@ -77,11 +79,18 @@ public class PlaceRecommendationService {
         }
 
         int limit = request.getLimit() != null ? request.getLimit() : 10;
-        // 기본 추천에서는 쿼리를 강제하지 않는다.
-        // 사용자가 입력했을 때만 쿼리를 전달한다.
         String query = (request.getQuery() != null && !request.getQuery().isBlank())
                 ? request.getQuery()
                 : "";
+
+        // 쿼리 입력 시 히스토리 저장
+        if (!query.isBlank()) {
+            userHistoryService.saveQueryHistory(userId, query);
+        }
+
+        // 사용자 히스토리 조회
+        List<String> pastQueries = userHistoryService.getRecentQueries(userId);
+        List<String> pastPlaceIds = userHistoryService.getRecentPlaceIds(userId);
 
         // 중간지점 좌표 전달 (근처 장소 추천에 활용)
         Double latitude = promise.getMidpointLatitude();
@@ -98,7 +107,10 @@ public class PlaceRecommendationService {
                 null,
                 null,
                 null,
-                null
+                null,
+                userId,
+                pastQueries,
+                pastPlaceIds
         );
 
         PlaceRecommendationResponse response = mono.block();
@@ -127,6 +139,18 @@ public class PlaceRecommendationService {
         }
 
         return response;
+    }
+
+    /**
+     * 장소 선택 기록 저장
+     */
+    @Transactional
+    public void recordPlaceSelection(Long promiseId, Long userId, String placeId, Long queryId) {
+        if (!participantRepository.existsByPromiseIdAndUserId(promiseId, userId)) {
+            throw new IllegalStateException("해당 약속의 참여자만 장소를 선택할 수 있습니다");
+        }
+        userHistoryService.savePlaceHistory(userId, placeId, queryId);
+        log.debug("Place selection recorded: promiseId={}, userId={}, placeId={}", promiseId, userId, placeId);
     }
 
     private List<PlaceRecommendationItem> sortAndLimit(

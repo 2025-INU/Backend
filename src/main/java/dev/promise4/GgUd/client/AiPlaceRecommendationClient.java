@@ -45,7 +45,10 @@ public class AiPlaceRecommendationClient {
             String timeSlot,
             List<String> preferredCategories,
             List<String> preferredRegions,
-            Integer participantCount) {
+            Integer participantCount,
+            Long userId,
+            List<String> pastQueries,
+            List<String> pastPlaceIds) {
 
         Map<String, Object> body = new java.util.HashMap<>(Map.of(
                 "query", query,
@@ -75,6 +78,15 @@ public class AiPlaceRecommendationClient {
         }
         if (participantCount != null) {
             body.put("participant_count", participantCount);
+        }
+        if (userId != null) {
+            body.put("user_id", userId);
+        }
+        if (pastQueries != null && !pastQueries.isEmpty()) {
+            body.put("past_queries", pastQueries);
+        }
+        if (pastPlaceIds != null && !pastPlaceIds.isEmpty()) {
+            body.put("past_place_ids", pastPlaceIds);
         }
 
         return aiServerWebClient.post()
