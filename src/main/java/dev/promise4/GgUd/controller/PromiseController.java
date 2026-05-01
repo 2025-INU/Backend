@@ -210,6 +210,26 @@ public class PromiseController {
     }
 
     /**
+     * 장소 선택 기록 (히스토리 저장용)
+     */
+    @PostMapping("/{promiseId}/recommendations/select")
+    @Operation(summary = "장소 선택 기록", description = "추천 결과에서 장소를 선택했을 때 히스토리를 저장합니다. 개인화 추천에 활용됩니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "기록 성공"),
+            @ApiResponse(responseCode = "400", description = "참여자 아님 또는 잘못된 요청"),
+            @ApiResponse(responseCode = "401", description = "인증 필요")
+    })
+    public ResponseEntity<Void> recordPlaceSelection(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+            @PathVariable Long promiseId,
+            @Valid @RequestBody PlaceSelectRequest request) {
+
+        log.debug("POST /api/v1/promises/{}/recommendations/select - userId: {}", promiseId, userId);
+        placeRecommendationService.recordPlaceSelection(promiseId, userId, request.getPlaceId(), request.getQueryId());
+        return ResponseEntity.ok().build();
+    }
+
+    /**
      * 약속 취소 (호스트 전용)
      */
     @PatchMapping("/{promiseId}/cancel")
