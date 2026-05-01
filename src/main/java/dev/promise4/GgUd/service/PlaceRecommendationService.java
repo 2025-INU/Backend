@@ -28,6 +28,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class PlaceRecommendationService {
+    private static final int DEFAULT_RECOMMENDATION_LIMIT = 10;
     private final PromiseRepository promiseRepository;
     private final ParticipantRepository participantRepository;
     private final AiPlaceRecommendationClient aiPlaceRecommendationClient;
@@ -60,7 +61,7 @@ public class PlaceRecommendationService {
 
         // 1. forceRefresh가 아니면 캐싱된 추천이 있으면 그대로 반환
         // query 기반 추천은 탭 필터 결과가 달라지므로 캐시를 우회한다.
-        if (!Boolean.TRUE.equals(request.getForceRefresh()) && !hasQuery && tab == PlaceRecommendationTab.ALL) {
+        if (!hasQuery && tab == PlaceRecommendationTab.ALL) {
             var cached = aiPlaceRecommendationsRepository.findByPromiseIdOrderByRankingAsc(promiseId);
             if (!cached.isEmpty()) {
                 log.debug("Found {} cached AI place recommendations for promiseId={}", cached.size(), promiseId);
@@ -74,8 +75,7 @@ public class PlaceRecommendationService {
                 return new PlaceRecommendationResponse(promiseId, items);
             }
         } else {
-            log.debug("cache bypassed for promiseId={}, hasQuery={}, tab={}, forceRefresh={}",
-                    promiseId, hasQuery, tab, request.getForceRefresh());
+            log.debug("cache bypassed for promiseId={}, hasQuery={}, tab={}", promiseId, hasQuery, tab);
         }
 
         int limit = request.getLimit() != null ? request.getLimit() : 10;
@@ -175,6 +175,8 @@ public class PlaceRecommendationService {
         item.setPlaceName(entity.getPlaceName());
         item.setCategory(entity.getCategory());
         item.setAddress(entity.getAddress());
+        item.setImageUrl(entity.getImageUrl());
+        item.setAiSummary(entity.getAiSummary());
         item.setLatitude(entity.getLatitude() != null ? entity.getLatitude().doubleValue() : null);
         item.setLongitude(entity.getLongitude() != null ? entity.getLongitude().doubleValue() : null);
         item.setAiScore(entity.getAiScore() != null ? entity.getAiScore().doubleValue() : null);
@@ -191,6 +193,8 @@ public class PlaceRecommendationService {
                 .placeName(item.getPlaceName())
                 .category(item.getCategory())
                 .address(item.getAddress())
+                .imageUrl(item.getImageUrl())
+                .aiSummary(item.getAiSummary())
                 .latitude(item.getLatitude() != null ? java.math.BigDecimal.valueOf(item.getLatitude()) : null)
                 .longitude(item.getLongitude() != null ? java.math.BigDecimal.valueOf(item.getLongitude()) : null)
                 .ranking(ranking)

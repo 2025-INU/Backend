@@ -1,5 +1,7 @@
 package dev.promise4.GgUd.controller.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -14,6 +16,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "추천 장소 항목")
 public class PlaceRecommendationItem {
 
@@ -31,6 +34,15 @@ public class PlaceRecommendationItem {
     @Schema(description = "주소")
     private String address;
 
+    @JsonProperty("image_url")
+    @Schema(description = "대표 이미지 URL")
+    private String imageUrl;
+
+    @JsonProperty("ai_summary")
+    @JsonInclude(JsonInclude.Include.ALWAYS)
+    @Schema(description = "네이버 지도 AI 요약 문구")
+    private String aiSummary;
+
     @Schema(description = "위도")
     private Double latitude;
 
@@ -41,27 +53,7 @@ public class PlaceRecommendationItem {
     @Schema(description = "AI 점수 (0~100)")
     private Double aiScore;
 
-    @JsonProperty("similarity_score")
-    @Schema(description = "유사도 raw 점수")
-    private Double similarityScore;
-
     @JsonProperty("distance_from_midpoint")
     @Schema(description = "중간지점으로부터의 거리 (km)")
     private Double distanceFromMidpoint;
-
-    @JsonProperty("distance_score")
-    @Schema(description = "거리 점수 (0~1)")
-    private Double distanceScore;
-
-    @JsonProperty("personalization_score")
-    @Schema(description = "개인화 점수 (0~1)")
-    private Double personalizationScore;
-
-    @JsonProperty("final_score")
-    @Schema(description = "최종 재랭킹 점수 (0~1)")
-    private Double finalScore;
-
-    @JsonProperty("recommendation_reason")
-    @Schema(description = "추천 사유")
-    private String recommendationReason;
 }
