@@ -28,7 +28,9 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class PlaceRecommendationService {
+
     private static final int DEFAULT_RECOMMENDATION_LIMIT = 10;
+
     private final PromiseRepository promiseRepository;
     private final ParticipantRepository participantRepository;
     private final AiPlaceRecommendationClient aiPlaceRecommendationClient;
@@ -78,7 +80,7 @@ public class PlaceRecommendationService {
             log.debug("cache bypassed for promiseId={}, hasQuery={}, tab={}", promiseId, hasQuery, tab);
         }
 
-        int limit = request.getLimit() != null ? request.getLimit() : 10;
+        int limit = DEFAULT_RECOMMENDATION_LIMIT;
         String query = (request.getQuery() != null && !request.getQuery().isBlank())
                 ? request.getQuery()
                 : "";
