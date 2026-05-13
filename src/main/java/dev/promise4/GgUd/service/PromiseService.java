@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 약속 서비스
@@ -60,7 +62,7 @@ public class PromiseService {
         log.info("Promise created: id={}, title={}, hostId={}",
                 promise.getId(), promise.getTitle(), userId);
 
-        return PromiseResponse.from(promise);
+        return PromiseResponse.from(promise, 1);
     }
 
     /**
@@ -71,7 +73,8 @@ public class PromiseService {
         Promise promise = promiseRepository.findByInviteCode(inviteCode)
                 .orElseThrow(() -> new InvalidInviteCodeException(inviteCode));
 
-        return PromiseResponse.from(promise);
+        long count = participantRepository.countByPromiseId(promise.getId());
+        return PromiseResponse.from(promise, count);
     }
 
     /**
@@ -113,7 +116,8 @@ public class PromiseService {
 
         log.info("User joined promise: promiseId={}, userId={}", promise.getId(), userId);
 
-        return PromiseResponse.from(promise);
+        long count = participantRepository.countByPromiseId(promise.getId());
+        return PromiseResponse.from(promise, count);
     }
 
     /**
@@ -169,10 +173,13 @@ public class PromiseService {
     }
 
     /**
-     * 참여자 목록 조회
+     * 참여자 목록 조회 (해당 약속의 참여자만 조회 가능)
      */
     @Transactional(readOnly = true)
-    public List<ParticipantResponse> getParticipants(Long promiseId) {
+    public List<ParticipantResponse> getParticipants(Long promiseId, Long userId) {
+        if (!participantRepository.existsByPromiseIdAndUserId(promiseId, userId)) {
+            throw new IllegalStateException("해당 약속의 참여자만 참여자 목록을 조회할 수 있습니다");
+        }
         return participantRepository.findByPromiseId(promiseId).stream()
                 .map(ParticipantResponse::from)
                 .toList();
@@ -197,7 +204,14 @@ public class PromiseService {
             promises = promiseRepository.findByUserParticipation(userId, pageable);
         }
 
-        return promises.map(PromiseResponse::from);
+        List<Long> promiseIds = promises.getContent().stream().map(Promise::getId).toList();
+        Map<Long, Long> countMap = participantRepository.countByPromiseIds(promiseIds).stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (Long) row[1]
+                ));
+
+        return promises.map(p -> PromiseResponse.from(p, countMap.getOrDefault(p.getId(), 0L)));
     }
 
     /**

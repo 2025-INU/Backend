@@ -74,4 +74,18 @@ public interface ParticipantRepository extends JpaRepository<Participant, Long> 
      * 도착한 참여자 수 조회
      */
     long countByPromiseIdAndArrivedAtIsNotNull(Long promiseId);
+
+    /**
+     * 여러 약속의 참여자 수 일괄 조회 (N+1 방지)
+     * returns: [promiseId, count] 쌍의 배열 목록
+     */
+    @Query("SELECT p.promise.id, COUNT(p) FROM Participant p WHERE p.promise.id IN :promiseIds GROUP BY p.promise.id")
+    List<Object[]> countByPromiseIds(@Param("promiseIds") List<Long> promiseIds);
+
+    /**
+     * 여러 약속의 출발지 미제출 참여자 일괄 조회 (스케줄러 N+1 방지)
+     */
+    @Query("SELECT p FROM Participant p LEFT JOIN FETCH p.user " +
+            "WHERE p.promise.id IN :promiseIds AND p.isLocationSubmitted = false")
+    List<Participant> findByPromiseIdsAndLocationNotSubmitted(@Param("promiseIds") List<Long> promiseIds);
 }

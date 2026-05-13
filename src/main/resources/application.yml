@@ -81,15 +81,12 @@ server:
     enabled: true
     mime-types: application/json,application/xml,text/html,text/xml,text/plain
 
-# Logging Configuration
+# Logging Configuration (기본 프로파일 - 운영용 안전 레벨)
+# DEBUG/TRACE 레벨은 application-local.yml 에서만 활성화 (민감 정보 노출 방지)
 logging:
   level:
     root: INFO
-    dev.promise4.GgUd: DEBUG
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-    org.springframework.web: DEBUG
-    org.springframework.security: DEBUG
+    dev.promise4.GgUd: INFO
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
