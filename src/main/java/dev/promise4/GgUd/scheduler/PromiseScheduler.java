@@ -13,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 약속 상태 자동 전환 스케줄러
@@ -70,9 +72,16 @@ public class PromiseScheduler {
         List<Promise> upcomingPromises = promiseRepository
                 .findByStatusAndPromiseDateTimeBefore(PromiseStatus.RECRUITING, twoHoursLater);
 
+        if (upcomingPromises.isEmpty()) return;
+
+        // 모든 약속의 미제출 참여자를 단일 쿼리로 일괄 조회 (N+1 방지)
+        List<Long> promiseIds = upcomingPromises.stream().map(Promise::getId).toList();
+        Map<Long, List<Participant>> pendingByPromise = participantRepository
+                .findByPromiseIdsAndLocationNotSubmitted(promiseIds).stream()
+                .collect(Collectors.groupingBy(p -> p.getPromise().getId()));
+
         for (Promise promise : upcomingPromises) {
-            List<Participant> pendingParticipants = participantRepository
-                    .findByPromiseIdAndLocationNotSubmitted(promise.getId());
+            List<Participant> pendingParticipants = pendingByPromise.getOrDefault(promise.getId(), List.of());
 
             if (!pendingParticipants.isEmpty()) {
                 log.info("Location submission reminder: promiseId={}, pendingCount={}",

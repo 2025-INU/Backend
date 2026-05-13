@@ -125,10 +125,11 @@ public class PromiseController {
             @ApiResponse(responseCode = "401", description = "인증 필요")
     })
     public ResponseEntity<List<ParticipantResponse>> getParticipants(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @PathVariable Long promiseId) {
 
-        log.debug("GET /api/v1/promises/{}/participants", promiseId);
-        List<ParticipantResponse> response = promiseService.getParticipants(promiseId);
+        log.debug("GET /api/v1/promises/{}/participants - userId: {}", promiseId, userId);
+        List<ParticipantResponse> response = promiseService.getParticipants(promiseId, userId);
         return ResponseEntity.ok(response);
     }
 

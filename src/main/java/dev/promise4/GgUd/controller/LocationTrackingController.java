@@ -15,7 +15,6 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,7 +28,6 @@ import java.util.Map;
  * 실시간 위치 공유 WebSocket 컨트롤러
  */
 @Slf4j
-@Controller
 @RestController
 @RequestMapping("/api/v1/promises")
 @RequiredArgsConstructor
@@ -52,12 +50,14 @@ public class LocationTrackingController {
         long totalCount = participants.size();
 
         List<Map<String, Object>> participantStatus = participants.stream()
-                .map(p -> Map.<String, Object>of(
-                        "userId", p.getUser().getId(),
-                        "nickname", p.getUser().getNickname(),
-                        "arrived", p.isArrived(),
-                        "arrivedAt", p.getArrivedAt() != null ? p.getArrivedAt().toString() : null
-                ))
+                .map(p -> {
+                    Map<String, Object> status = new java.util.LinkedHashMap<>();
+                    status.put("userId", p.getUser().getId());
+                    status.put("nickname", p.getUser().getNickname());
+                    status.put("arrived", p.isArrived());
+                    status.put("arrivedAt", p.getArrivedAt() != null ? p.getArrivedAt().toString() : null);
+                    return status;
+                })
                 .toList();
 
         return ResponseEntity.ok(Map.of(
