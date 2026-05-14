@@ -57,7 +57,7 @@ public class LocationTrackingService {
         }
 
         if (!isWithinTrackingWindow(promise)) {
-            throw new IllegalStateException("위치 공유는 약속 시간 5분 전부터 가능합니다");
+            throw new IllegalStateException("위치 공유는 약속 시간 1시간 전부터 가능합니다");
         }
 
         User user = userRepository.findById(userId)
@@ -168,11 +168,11 @@ public class LocationTrackingService {
     }
 
     /**
-     * 약속 시간 5분 전부터 추적 가능
+     * 약속 시간 1시간 전부터 추적 가능
      */
     private boolean isWithinTrackingWindow(Promise promise) {
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime trackingStartTime = promise.getPromiseDateTime().minusMinutes(5);
+        LocalDateTime trackingStartTime = promise.getPromiseDateTime().minusHours(1);
         return now.isAfter(trackingStartTime);
     }
 }
