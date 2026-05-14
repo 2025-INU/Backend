@@ -41,7 +41,8 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/api/health",
-                                "/api/v1/auth/**" // 인증 엔드포인트 허용
+                                "/api/v1/auth/**", // 인증 엔드포인트 허용
+                                "/ws/**" // WebSocket 핸드셰이크 (STOMP CONNECT 프레임에서 JWT 검증)
                         ).permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

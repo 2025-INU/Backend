@@ -90,11 +90,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
 
-        // 인증이 필요 없는 경로 설정
+        // 인증이 필요 없는 경로 설정 (/ws는 STOMP CONNECT 프레임에서 JWT 검증)
         return path.startsWith("/api/v1/auth/") ||
                 path.startsWith("/actuator/") ||
                 path.startsWith("/api-docs") ||
                 path.startsWith("/swagger-ui") ||
+                path.startsWith("/ws") ||
                 path.equals("/api/health");
     }
 }
