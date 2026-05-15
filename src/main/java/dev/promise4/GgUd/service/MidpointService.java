@@ -4,6 +4,7 @@ import dev.promise4.GgUd.common.exception.BusinessException;
 import dev.promise4.GgUd.common.exception.ErrorCode;
 import dev.promise4.GgUd.controller.dto.*;
 import dev.promise4.GgUd.entity.*;
+import dev.promise4.GgUd.event.PromiseEventPublisher;
 import dev.promise4.GgUd.repository.AiPlaceRecommendationsRepository;
 import dev.promise4.GgUd.repository.ParticipantRepository;
 import dev.promise4.GgUd.repository.PromiseRepository;
@@ -31,6 +32,7 @@ public class MidpointService {
     private final MidpointCalculationService midpointCalculationService;
     private final TMapDirectionsService tMapDirectionsService;
     private final AiPlaceRecommendationsRepository aiPlaceRecommendationsRepository;
+    private final PromiseEventPublisher eventPublisher;
 
     /**
      * 중간지점 추천 조회
@@ -155,6 +157,7 @@ public class MidpointService {
                 .orElseThrow(() -> new IllegalArgumentException("역을 찾을 수 없습니다"));
 
         promise.confirmMidpointStation(station.getLatitude(), station.getLongitude(), station.getStationName());
+        eventPublisher.publishStatusChanged(promiseId, PromiseStatus.SELECTING_MIDPOINT, PromiseStatus.MIDPOINT_CONFIRMED, station.getStationName());
 
         log.info("Midpoint confirmed: promiseId={}, stationId={}, stationName={}",
                 promiseId, stationId, station.getStationName());
@@ -193,6 +196,7 @@ public class MidpointService {
         }
 
         promise.confirmFinalPlace(request.getLatitude(), request.getLongitude(), request.getPlaceName());
+        eventPublisher.publishStatusChanged(promiseId, PromiseStatus.MIDPOINT_CONFIRMED, PromiseStatus.PLACE_CONFIRMED, request.getPlaceName());
 
         log.info("Final place confirmed: promiseId={}, placeName={}", promiseId, request.getPlaceName());
     }

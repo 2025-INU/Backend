@@ -4,6 +4,7 @@ import dev.promise4.GgUd.common.exception.BusinessException;
 import dev.promise4.GgUd.common.exception.ErrorCode;
 import dev.promise4.GgUd.controller.dto.*;
 import dev.promise4.GgUd.entity.*;
+import dev.promise4.GgUd.event.PromiseEventPublisher;
 import dev.promise4.GgUd.exception.*;
 import dev.promise4.GgUd.repository.ParticipantRepository;
 import dev.promise4.GgUd.repository.PromiseRepository;
@@ -30,6 +31,7 @@ public class PromiseService {
     private final PromiseRepository promiseRepository;
     private final ParticipantRepository participantRepository;
     private final UserRepository userRepository;
+    private final PromiseEventPublisher eventPublisher;
 
     /**
      * 약속 생성
@@ -170,6 +172,7 @@ public class PromiseService {
         }
 
         promise.startSelectingMidpoint();
+        eventPublisher.publishStatusChanged(promiseId, PromiseStatus.RECRUITING, PromiseStatus.SELECTING_MIDPOINT, null);
 
         log.info("Midpoint selection started: promiseId={}, hostId={}", promiseId, userId);
     }
@@ -252,7 +255,10 @@ public class PromiseService {
             throw new BusinessException(ErrorCode.HANDLE_ACCESS_DENIED);
         }
 
+        PromiseStatus previousStatus = promise.getStatus();
         promise.cancel();
+        eventPublisher.publishStatusChanged(promiseId, previousStatus, PromiseStatus.CANCELLED, null);
+
         log.info("Promise cancelled by host: promiseId={}, hostId={}", promiseId, userId);
     }
 
@@ -274,6 +280,8 @@ public class PromiseService {
         }
 
         promise.complete();
+        eventPublisher.publishStatusChanged(promiseId, PromiseStatus.IN_PROGRESS, PromiseStatus.COMPLETED, null);
+
         log.info("Promise completed by host: promiseId={}, hostId={}", promiseId, userId);
     }
 
