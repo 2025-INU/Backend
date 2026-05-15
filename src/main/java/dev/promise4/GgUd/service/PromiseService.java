@@ -5,6 +5,7 @@ import dev.promise4.GgUd.common.exception.ErrorCode;
 import dev.promise4.GgUd.controller.dto.*;
 import dev.promise4.GgUd.entity.*;
 import dev.promise4.GgUd.event.PromiseEventPublisher;
+import java.util.List;
 import dev.promise4.GgUd.exception.*;
 import dev.promise4.GgUd.repository.ParticipantRepository;
 import dev.promise4.GgUd.repository.PromiseRepository;
@@ -238,8 +239,8 @@ public class PromiseService {
         Promise promise = promiseRepository.findByIdWithHost(promiseId)
                 .orElseThrow(() -> new IllegalArgumentException("약속을 찾을 수 없습니다"));
 
-        long participantCount = participantRepository.countByPromiseId(promiseId);
-        return PromiseResponse.from(promise, participantCount);
+        List<Participant> participants = participantRepository.findByPromiseId(promiseId);
+        return PromiseResponse.from(promise, participants);
     }
 
     /**

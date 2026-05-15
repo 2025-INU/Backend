@@ -1,5 +1,6 @@
 package dev.promise4.GgUd.controller.dto;
 
+import dev.promise4.GgUd.entity.Participant;
 import dev.promise4.GgUd.entity.Promise;
 import dev.promise4.GgUd.entity.PromiseStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -9,6 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 약속 응답 DTO
@@ -68,6 +70,9 @@ public class PromiseResponse {
     @Schema(description = "생성 일시")
     private LocalDateTime createdAt;
 
+    @Schema(description = "참여자 목록 (상세 조회 시에만 포함)")
+    private List<ParticipantResponse> participants;
+
     public static PromiseResponse from(Promise promise) {
         return from(promise, 0);
     }
@@ -90,6 +95,31 @@ public class PromiseResponse {
                 .confirmedLongitude(promise.getConfirmedLongitude())
                 .confirmedPlaceName(promise.getConfirmedPlaceName())
                 .createdAt(promise.getCreatedAt())
+                .build();
+    }
+
+    public static PromiseResponse from(Promise promise, List<Participant> participants) {
+        List<ParticipantResponse> participantResponses = participants.stream()
+                .map(ParticipantResponse::from)
+                .toList();
+        return PromiseResponse.builder()
+                .id(promise.getId())
+                .title(promise.getTitle())
+                .description(promise.getDescription())
+                .promiseDateTime(promise.getPromiseDateTime())
+                .status(promise.getStatus())
+                .inviteCode(promise.getInviteCode())
+                .inviteExpiredAt(promise.getInviteExpiredAt())
+                .maxParticipants(promise.getMaxParticipants())
+                .hostId(promise.getHost().getId())
+                .hostNickname(promise.getHost().getNickname())
+                .hostProfileImageUrl(promise.getHost().getProfileImageUrl())
+                .participantCount(participants.size())
+                .confirmedLatitude(promise.getConfirmedLatitude())
+                .confirmedLongitude(promise.getConfirmedLongitude())
+                .confirmedPlaceName(promise.getConfirmedPlaceName())
+                .createdAt(promise.getCreatedAt())
+                .participants(participantResponses)
                 .build();
     }
 }
