@@ -50,6 +50,9 @@ public class PromiseResponse {
     @Schema(description = "호스트 닉네임", example = "홍길동")
     private String hostNickname;
 
+    @Schema(description = "호스트 프로필 이미지 URL")
+    private String hostProfileImageUrl;
+
     @Schema(description = "참여 인원 수", example = "4")
     private long participantCount;
 
@@ -81,6 +84,7 @@ public class PromiseResponse {
                 .maxParticipants(promise.getMaxParticipants())
                 .hostId(promise.getHost().getId())
                 .hostNickname(promise.getHost().getNickname())
+                .hostProfileImageUrl(promise.getHost().getProfileImageUrl())
                 .participantCount(participantCount)
                 .confirmedLatitude(promise.getConfirmedLatitude())
                 .confirmedLongitude(promise.getConfirmedLongitude())

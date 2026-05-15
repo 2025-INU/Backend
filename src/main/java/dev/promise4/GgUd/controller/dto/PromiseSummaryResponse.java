@@ -34,6 +34,9 @@ public class PromiseSummaryResponse {
     @Schema(description = "호스트 닉네임", example = "홍길동")
     private String hostNickname;
 
+    @Schema(description = "호스트 프로필 이미지 URL")
+    private String hostProfileImageUrl;
+
     public static PromiseSummaryResponse from(Promise promise) {
         return PromiseSummaryResponse.builder()
                 .id(promise.getId())
@@ -41,6 +44,7 @@ public class PromiseSummaryResponse {
                 .promiseDateTime(promise.getPromiseDateTime())
                 .hostId(promise.getHost().getId())
                 .hostNickname(promise.getHost().getNickname())
+                .hostProfileImageUrl(promise.getHost().getProfileImageUrl())
                 .build();
     }
 }
