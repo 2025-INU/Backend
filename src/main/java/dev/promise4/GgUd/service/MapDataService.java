@@ -15,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 카카오맵 데이터 서비스
@@ -66,14 +68,21 @@ public class MapDataService {
         List<MapDataResponse.ParticipantMarker> currentLocations = new ArrayList<>();
         if (promise.getStatus() == PromiseStatus.PLACE_CONFIRMED
                 || promise.getStatus() == PromiseStatus.IN_PROGRESS) {
+            Map<Long, Participant> participantMap = participants.stream()
+                    .collect(Collectors.toMap(p -> p.getUser().getId(), p -> p));
             ParticipantLocationResponse locations = locationTrackingService.getParticipantLocations(promiseId);
             currentLocations = locations.getLocations().stream()
-                    .map(loc -> MapDataResponse.ParticipantMarker.builder()
-                            .userId(loc.getUserId())
-                            .nickname(loc.getNickname())
-                            .latitude(loc.getLatitude())
-                            .longitude(loc.getLongitude())
-                            .build())
+                    .map(loc -> {
+                        Participant p = participantMap.get(loc.getUserId());
+                        return MapDataResponse.ParticipantMarker.builder()
+                                .userId(loc.getUserId())
+                                .nickname(loc.getNickname())
+                                .profileImageUrl(p != null ? p.getUser().getProfileImageUrl() : null)
+                                .latitude(loc.getLatitude())
+                                .longitude(loc.getLongitude())
+                                .host(p != null && p.isHost())
+                                .build();
+                    })
                     .toList();
         }
 
