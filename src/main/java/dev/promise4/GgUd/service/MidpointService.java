@@ -1,5 +1,7 @@
 package dev.promise4.GgUd.service;
 
+import dev.promise4.GgUd.common.exception.BusinessException;
+import dev.promise4.GgUd.common.exception.ErrorCode;
 import dev.promise4.GgUd.controller.dto.*;
 import dev.promise4.GgUd.entity.*;
 import dev.promise4.GgUd.repository.AiPlaceRecommendationsRepository;
@@ -142,7 +144,7 @@ public class MidpointService {
                 .orElseThrow(() -> new IllegalArgumentException("약속을 찾을 수 없습니다"));
 
         if (!promise.getHost().getId().equals(userId)) {
-            throw new IllegalStateException("호스트만 확정할 수 있습니다");
+            throw new BusinessException(ErrorCode.HANDLE_ACCESS_DENIED);
         }
 
         if (promise.getStatus() != PromiseStatus.SELECTING_MIDPOINT) {
@@ -168,7 +170,7 @@ public class MidpointService {
                 .orElseThrow(() -> new IllegalArgumentException("약속을 찾을 수 없습니다"));
 
         if (!promise.getHost().getId().equals(userId)) {
-            throw new IllegalStateException("호스트만 중간지점을 변경할 수 있습니다");
+            throw new BusinessException(ErrorCode.HANDLE_ACCESS_DENIED);
         }
 
         promise.resetMidpoint();
@@ -187,7 +189,7 @@ public class MidpointService {
                 .orElseThrow(() -> new IllegalArgumentException("약속을 찾을 수 없습니다"));
 
         if (!promise.getHost().getId().equals(userId)) {
-            throw new IllegalStateException("호스트만 약속 장소를 확정할 수 있습니다");
+            throw new BusinessException(ErrorCode.HANDLE_ACCESS_DENIED);
         }
 
         promise.confirmFinalPlace(request.getLatitude(), request.getLongitude(), request.getPlaceName());

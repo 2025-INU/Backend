@@ -1,5 +1,7 @@
 package dev.promise4.GgUd.service;
 
+import dev.promise4.GgUd.common.exception.BusinessException;
+import dev.promise4.GgUd.common.exception.ErrorCode;
 import dev.promise4.GgUd.controller.dto.*;
 import dev.promise4.GgUd.entity.*;
 import dev.promise4.GgUd.exception.*;
@@ -155,7 +157,7 @@ public class PromiseService {
                 .orElseThrow(() -> new IllegalArgumentException("약속을 찾을 수 없습니다"));
 
         if (!promise.getHost().getId().equals(userId)) {
-            throw new IllegalStateException("호스트만 다음 단계로 진행할 수 있습니다");
+            throw new BusinessException(ErrorCode.HANDLE_ACCESS_DENIED);
         }
 
         if (promise.getStatus() != PromiseStatus.RECRUITING) {
@@ -247,7 +249,7 @@ public class PromiseService {
                 .orElseThrow(() -> new IllegalArgumentException("약속을 찾을 수 없습니다"));
 
         if (!promise.getHost().getId().equals(userId)) {
-            throw new IllegalStateException("호스트만 약속을 취소할 수 있습니다");
+            throw new BusinessException(ErrorCode.HANDLE_ACCESS_DENIED);
         }
 
         promise.cancel();
@@ -264,7 +266,7 @@ public class PromiseService {
                 .orElseThrow(() -> new IllegalArgumentException("약속을 찾을 수 없습니다"));
 
         if (!promise.getHost().getId().equals(userId)) {
-            throw new IllegalStateException("호스트만 약속을 종료할 수 있습니다");
+            throw new BusinessException(ErrorCode.HANDLE_ACCESS_DENIED);
         }
 
         if (promise.getStatus() != PromiseStatus.IN_PROGRESS) {
