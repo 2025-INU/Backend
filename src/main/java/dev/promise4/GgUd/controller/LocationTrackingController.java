@@ -1,7 +1,6 @@
 package dev.promise4.GgUd.controller;
 
 import dev.promise4.GgUd.controller.dto.LocationUpdateMessage;
-import dev.promise4.GgUd.controller.dto.ParticipantLocationResponse;
 import dev.promise4.GgUd.entity.Participant;
 import dev.promise4.GgUd.repository.ParticipantRepository;
 import dev.promise4.GgUd.service.LocationTrackingService;
@@ -36,17 +35,6 @@ public class LocationTrackingController {
 
     private final LocationTrackingService locationTrackingService;
     private final ParticipantRepository participantRepository;
-
-    /**
-     * 참여자 실시간 위치 조회 (초기 로드용)
-     * GET /api/v1/promises/{promiseId}/locations
-     */
-    @GetMapping("/{promiseId}/locations")
-    @Operation(summary = "참여자 위치 조회",
-            description = "Redis에 저장된 참여자들의 최근 위치를 반환합니다. 지도 진입 시 초기 마커 표시용.")
-    public ResponseEntity<ParticipantLocationResponse> getParticipantLocations(@PathVariable Long promiseId) {
-        return ResponseEntity.ok(locationTrackingService.getParticipantLocations(promiseId));
-    }
 
     /**
      * 도착 현황 조회
