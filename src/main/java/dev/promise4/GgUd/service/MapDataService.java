@@ -62,9 +62,10 @@ public class MapDataService {
                         .build())
                 .toList();
 
-        // 실시간 위치 (IN_PROGRESS일 때만)
+        // 실시간 위치 (PLACE_CONFIRMED 또는 IN_PROGRESS - 위치 추적 허용 상태)
         List<MapDataResponse.ParticipantMarker> currentLocations = new ArrayList<>();
-        if (promise.getStatus() == PromiseStatus.IN_PROGRESS) {
+        if (promise.getStatus() == PromiseStatus.PLACE_CONFIRMED
+                || promise.getStatus() == PromiseStatus.IN_PROGRESS) {
             ParticipantLocationResponse locations = locationTrackingService.getParticipantLocations(promiseId);
             currentLocations = locations.getLocations().stream()
                     .map(loc -> MapDataResponse.ParticipantMarker.builder()

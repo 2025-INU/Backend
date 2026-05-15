@@ -30,7 +30,7 @@ public class MapDataResponse {
     @Schema(description = "추천 중간지점 목록")
     private List<MapMarker> recommendedMidpoints;
 
-    @Schema(description = "실시간 위치 (IN_PROGRESS일 때만)")
+    @Schema(description = "실시간 위치 (PLACE_CONFIRMED 또는 IN_PROGRESS일 때)")
     private List<ParticipantMarker> currentLocations;
 
     @Getter
