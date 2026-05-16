@@ -24,6 +24,9 @@ public class LocationUpdateMessage {
     @Schema(description = "닉네임", example = "홍길동")
     private String nickname;
 
+    @Schema(description = "프로필 이미지 URL")
+    private String profileImageUrl;
+
     @Schema(description = "위도", example = "37.5665")
     private double latitude;
 
@@ -33,10 +36,11 @@ public class LocationUpdateMessage {
     @Schema(description = "타임스탬프")
     private LocalDateTime timestamp;
 
-    public static LocationUpdateMessage of(Long userId, String nickname, double latitude, double longitude) {
+    public static LocationUpdateMessage of(Long userId, String nickname, String profileImageUrl, double latitude, double longitude) {
         return LocationUpdateMessage.builder()
                 .userId(userId)
                 .nickname(nickname)
+                .profileImageUrl(profileImageUrl)
                 .latitude(latitude)
                 .longitude(longitude)
                 .timestamp(LocalDateTime.now())

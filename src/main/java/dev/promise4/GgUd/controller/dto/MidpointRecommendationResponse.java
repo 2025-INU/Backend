@@ -26,4 +26,7 @@ public class MidpointRecommendationResponse {
 
     @Schema(description = "참여자 수", example = "5")
     private int participantCount;
+
+    @Schema(description = "현재 사용자가 호스트 여부", example = "true")
+    private boolean host;
 }

@@ -39,10 +39,11 @@ public class MidpointController {
             @ApiResponse(responseCode = "401", description = "인증 필요")
     })
     public ResponseEntity<MidpointRecommendationResponse> getRecommendations(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @PathVariable Long promiseId) {
 
-        log.debug("GET /api/v1/promises/{}/midpoint/recommendations", promiseId);
-        MidpointRecommendationResponse response = midpointService.getRecommendations(promiseId);
+        log.debug("GET /api/v1/promises/{}/midpoint/recommendations - userId: {}", promiseId, userId);
+        MidpointRecommendationResponse response = midpointService.getRecommendations(promiseId, userId);
         return ResponseEntity.ok(response);
     }
 

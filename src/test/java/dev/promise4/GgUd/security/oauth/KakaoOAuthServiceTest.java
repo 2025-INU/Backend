@@ -140,9 +140,9 @@ class KakaoOAuthServiceTest {
             // when
             User user = kakaoOAuthService.processKakaoLoginWithToken("sdk-access-token");
 
-            // then
-            assertThat(user.getNickname()).isEqualTo("홍길동");
-            assertThat(user.getEmail()).isEqualTo("hong@kakao.com");
+            // then - 기존 프로필은 카카오 로그인으로 덮어쓰지 않음
+            assertThat(user.getNickname()).isEqualTo("기존닉네임");
+            assertThat(user.getEmail()).isEqualTo("old@email.com");
             verify(userRepository, never()).save(any(User.class));
         }
     }
