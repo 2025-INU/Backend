@@ -3,7 +3,6 @@ package dev.promise4.GgUd.scheduler;
 import dev.promise4.GgUd.entity.Participant;
 import dev.promise4.GgUd.entity.Promise;
 import dev.promise4.GgUd.entity.PromiseStatus;
-import dev.promise4.GgUd.event.PromiseEventPublisher;
 import dev.promise4.GgUd.repository.ParticipantRepository;
 import dev.promise4.GgUd.repository.PromiseRepository;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +28,6 @@ public class PromiseScheduler {
 
     private final PromiseRepository promiseRepository;
     private final ParticipantRepository participantRepository;
-    private final PromiseEventPublisher eventPublisher;
 
     /**
      * PLACE_CONFIRMED 상태 약속 → IN_PROGRESS 자동 전환
@@ -47,7 +45,6 @@ public class PromiseScheduler {
         for (Promise promise : promisesToStart) {
             try {
                 promise.startProgress();
-                eventPublisher.publishStatusChanged(promise.getId(), PromiseStatus.PLACE_CONFIRMED, PromiseStatus.IN_PROGRESS, null);
                 log.info("Promise auto-started: promiseId={}, title={}, promiseDateTime={}",
                         promise.getId(), promise.getTitle(), promise.getPromiseDateTime());
             } catch (Exception e) {

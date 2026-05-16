@@ -25,4 +25,7 @@ public class PlaceRecommendationResponse {
 
     @Schema(description = "추천 장소 목록")
     private List<PlaceRecommendationItem> recommendations;
+
+    @Schema(description = "현재 사용자가 호스트 여부", example = "true")
+    private boolean host;
 }

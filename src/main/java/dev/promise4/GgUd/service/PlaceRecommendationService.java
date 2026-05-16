@@ -58,6 +58,7 @@ public class PlaceRecommendationService {
             throw new IllegalStateException("해당 약속의 참여자만 장소 추천을 요청할 수 있습니다");
         }
 
+        boolean isHost = promise.getHost().getId().equals(userId);
         PlaceRecommendationTab tab = request.getTab() != null ? request.getTab() : PlaceRecommendationTab.ALL;
         boolean hasQuery = StringUtils.hasText(request.getQuery());
 
@@ -74,7 +75,8 @@ public class PlaceRecommendationService {
                                 Comparator.nullsLast(Double::compareTo)
                         ))
                         .toList();
-                return new PlaceRecommendationResponse(promiseId, items);
+                PlaceRecommendationResponse cachedResponse = new PlaceRecommendationResponse(promiseId, items, isHost);
+                return cachedResponse;
             }
         } else {
             log.debug("cache bypassed for promiseId={}, hasQuery={}, tab={}", promiseId, hasQuery, tab);
@@ -118,10 +120,11 @@ public class PlaceRecommendationService {
         PlaceRecommendationResponse response = mono.block();
         if (response == null) {
             log.warn("AI 서버로부터 null 응답 수신, 빈 추천 결과 반환");
-            return new PlaceRecommendationResponse(promiseId, java.util.List.of());
+            return new PlaceRecommendationResponse(promiseId, java.util.List.of(), isHost);
         }
 
         response.setPromiseId(promiseId);
+        response.setHost(isHost);
         List<PlaceRecommendationItem> filtered = sortAndLimit(response.getRecommendations(), limit);
         response.setRecommendations(filtered);
 

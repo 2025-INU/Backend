@@ -63,7 +63,7 @@ public class LocationTrackingService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
 
-        LocationUpdateMessage location = LocationUpdateMessage.of(userId, user.getNickname(), latitude, longitude);
+        LocationUpdateMessage location = LocationUpdateMessage.of(userId, user.getNickname(), user.getProfileImageUrl(), latitude, longitude);
 
         // Redis Hash에 저장
         String key = LOCATION_KEY_PREFIX + promiseId;
