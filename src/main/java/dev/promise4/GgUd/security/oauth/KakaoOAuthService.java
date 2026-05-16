@@ -69,11 +69,6 @@ public class KakaoOAuthService {
 
         return userRepository.findByKakaoId(userInfo.getKakaoId())
                 .map(existingUser -> {
-                    // 기존 사용자: 프로필 정보 업데이트
-                    existingUser.updateProfile(
-                            finalNickname,
-                            userInfo.getEmail(),
-                            userInfo.getProfileImageUrl());
                     log.info("Existing user logged in: kakaoId={}", userInfo.getKakaoId());
                     return existingUser;
                 })
