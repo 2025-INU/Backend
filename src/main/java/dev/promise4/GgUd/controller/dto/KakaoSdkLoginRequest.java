@@ -18,4 +18,7 @@ public class KakaoSdkLoginRequest {
     @NotBlank(message = "카카오 액세스 토큰은 필수입니다")
     @Schema(description = "카카오 SDK에서 발급받은 액세스 토큰", example = "KakaoAK_abc123...")
     private String kakaoAccessToken;
+
+    @Schema(description = "카카오 SDK에서 발급받은 리프레시 토큰 (정산 알림 자동 갱신용, 선택)", example = "abc123refresh...")
+    private String kakaoRefreshToken;
 }
