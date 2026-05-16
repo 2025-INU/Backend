@@ -71,7 +71,7 @@ class AuthServiceTest {
         @DisplayName("카카오 SDK 토큰으로 로그인을 성공적으로 처리한다")
         void processKakaoLoginWithToken_success() {
             // given
-            when(kakaoOAuthService.processKakaoLoginWithToken("kakao-token")).thenReturn(mockUser);
+            when(kakaoOAuthService.processKakaoLoginWithToken("kakao-token", "kakao-refresh-token")).thenReturn(mockUser);
             when(jwtTokenProvider.createAccessToken(1L)).thenReturn("access-token");
             when(jwtTokenProvider.createRefreshToken(1L)).thenReturn("refresh-token");
             when(jwtTokenProvider.getTokenIdFromToken("refresh-token")).thenReturn("token-id");
@@ -81,7 +81,7 @@ class AuthServiceTest {
             when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(i -> i.getArgument(0));
 
             // when
-            LoginResponse response = authService.processKakaoLoginWithToken("kakao-token");
+            LoginResponse response = authService.processKakaoLoginWithToken("kakao-token", "kakao-refresh-token");
 
             // then
             assertThat(response.getAccessToken()).isEqualTo("access-token");
@@ -91,7 +91,7 @@ class AuthServiceTest {
             assertThat(response.getUserId()).isEqualTo(1L);
             assertThat(response.getNickname()).isEqualTo("테스트유저");
 
-            verify(kakaoOAuthService).processKakaoLoginWithToken("kakao-token");
+            verify(kakaoOAuthService).processKakaoLoginWithToken("kakao-token", "kakao-refresh-token");
             verify(refreshTokenRepository).save(any(RefreshToken.class));
         }
     }

@@ -46,6 +46,9 @@ public class User extends BaseTimeEntity {
     @Column(name = "kakao_access_token", columnDefinition = "TEXT")
     private String kakaoAccessToken;
 
+    @Column(name = "kakao_refresh_token", columnDefinition = "TEXT")
+    private String kakaoRefreshToken;
+
     /**
      * 프로필 정보 업데이트
      */
@@ -60,6 +63,17 @@ public class User extends BaseTimeEntity {
      */
     public void updateKakaoAccessToken(String kakaoAccessToken) {
         this.kakaoAccessToken = kakaoAccessToken;
+    }
+
+    /**
+     * 카카오 액세스/리프레시 토큰 갱신 (로그인 및 자체 갱신용)
+     * refreshToken이 null이면 기존 값 유지 (카카오는 만료 임박 시에만 새 refresh token 반환)
+     */
+    public void updateKakaoTokens(String kakaoAccessToken, String kakaoRefreshToken) {
+        this.kakaoAccessToken = kakaoAccessToken;
+        if (kakaoRefreshToken != null && !kakaoRefreshToken.isBlank()) {
+            this.kakaoRefreshToken = kakaoRefreshToken;
+        }
     }
 
     /**

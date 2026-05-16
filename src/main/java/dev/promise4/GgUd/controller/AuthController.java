@@ -44,7 +44,8 @@ public class AuthController {
                         @Valid @RequestBody KakaoSdkLoginRequest request) {
                 log.debug("POST /api/v1/auth/kakao/login - SDK token login");
 
-                LoginResponse response = authService.processKakaoLoginWithToken(request.getKakaoAccessToken());
+                LoginResponse response = authService.processKakaoLoginWithToken(
+                                request.getKakaoAccessToken(), request.getKakaoRefreshToken());
                 return ResponseEntity.ok(response);
         }
 

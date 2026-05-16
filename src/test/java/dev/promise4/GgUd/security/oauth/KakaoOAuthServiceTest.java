@@ -110,7 +110,7 @@ class KakaoOAuthServiceTest {
             when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
             // when
-            User user = kakaoOAuthService.processKakaoLoginWithToken("sdk-access-token");
+            User user = kakaoOAuthService.processKakaoLoginWithToken("sdk-access-token", "sdk-refresh-token");
 
             // then
             assertThat(user).isNotNull();
@@ -138,7 +138,7 @@ class KakaoOAuthServiceTest {
             when(userRepository.findByKakaoId("12345678")).thenReturn(Optional.of(existingUser));
 
             // when
-            User user = kakaoOAuthService.processKakaoLoginWithToken("sdk-access-token");
+            User user = kakaoOAuthService.processKakaoLoginWithToken("sdk-access-token", "sdk-refresh-token");
 
             // then - 기존 프로필은 카카오 로그인으로 덮어쓰지 않음
             assertThat(user.getNickname()).isEqualTo("기존닉네임");

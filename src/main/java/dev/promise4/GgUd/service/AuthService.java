@@ -32,8 +32,8 @@ public class AuthService {
      * 카카오 SDK 로그인 처리 (액세스 토큰 방식 - 모바일용)
      */
     @Transactional
-    public LoginResponse processKakaoLoginWithToken(String kakaoAccessToken) {
-        User user = kakaoOAuthService.processKakaoLoginWithToken(kakaoAccessToken);
+    public LoginResponse processKakaoLoginWithToken(String kakaoAccessToken, String kakaoRefreshToken) {
+        User user = kakaoOAuthService.processKakaoLoginWithToken(kakaoAccessToken, kakaoRefreshToken);
 
         String accessToken = jwtTokenProvider.createAccessToken(user.getId());
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());

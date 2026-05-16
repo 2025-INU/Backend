@@ -48,7 +48,7 @@ class AuthControllerTest {
         @DisplayName("카카오 SDK 토큰으로 로그인을 성공적으로 처리한다")
         void kakaoSdkLogin_success() throws Exception {
             // given
-            KakaoSdkLoginRequest request = new KakaoSdkLoginRequest("kakao-access-token-123");
+            KakaoSdkLoginRequest request = new KakaoSdkLoginRequest("kakao-access-token-123", "kakao-refresh-token-123");
 
             LoginResponse response = LoginResponse.builder()
                     .accessToken("jwt-access-token")
@@ -59,7 +59,7 @@ class AuthControllerTest {
                     .nickname("홍길동")
                     .build();
 
-            when(authService.processKakaoLoginWithToken("kakao-access-token-123")).thenReturn(response);
+            when(authService.processKakaoLoginWithToken("kakao-access-token-123", "kakao-refresh-token-123")).thenReturn(response);
 
             // when & then
             mockMvc.perform(post("/api/v1/auth/kakao/login")
@@ -73,14 +73,14 @@ class AuthControllerTest {
                     .andExpect(jsonPath("$.userId").value(1))
                     .andExpect(jsonPath("$.nickname").value("홍길동"));
 
-            verify(authService).processKakaoLoginWithToken("kakao-access-token-123");
+            verify(authService).processKakaoLoginWithToken("kakao-access-token-123", "kakao-refresh-token-123");
         }
 
         @Test
         @DisplayName("빈 카카오 토큰으로 요청하면 실패한다")
         void kakaoSdkLogin_withEmptyToken_returnsBadRequest() throws Exception {
             // given
-            KakaoSdkLoginRequest request = new KakaoSdkLoginRequest("");
+            KakaoSdkLoginRequest request = new KakaoSdkLoginRequest("", null);
 
             // when & then
             mockMvc.perform(post("/api/v1/auth/kakao/login")
@@ -88,7 +88,7 @@ class AuthControllerTest {
                     .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest());
 
-            verify(authService, never()).processKakaoLoginWithToken(any());
+            verify(authService, never()).processKakaoLoginWithToken(any(), any());
         }
     }
 

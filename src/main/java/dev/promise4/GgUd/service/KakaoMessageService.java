@@ -6,12 +6,15 @@ import dev.promise4.GgUd.controller.dto.ExpenseRecordResponse;
 import dev.promise4.GgUd.controller.dto.SettlementResponse;
 import dev.promise4.GgUd.controller.dto.SettlementTransferResponse;
 import dev.promise4.GgUd.entity.Participant;
+import dev.promise4.GgUd.entity.User;
+import dev.promise4.GgUd.security.oauth.KakaoOAuthService;
 import dev.promise4.GgUd.service.kakao.SettlementMessageTemplateBuilder;
 import dev.promise4.GgUd.service.kakao.SettlementMessageTemplateBuilder.SettlementPersonalData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.List;
 import java.util.Map;
@@ -30,6 +33,7 @@ public class KakaoMessageService {
     private final SettlementMessageTemplateBuilder templateBuilder;
     private final ObjectMapper objectMapper;
     private final WebClient.Builder webClientBuilder;
+    private final KakaoOAuthService kakaoOAuthService;
 
     /**
      * 정산 완료 시 모든 참여자에게 카카오톡 알림 전송
@@ -45,8 +49,9 @@ public class KakaoMessageService {
     }
 
     private void sendSettlementMessageToParticipant(SettlementResponse settlement, Participant participant) {
-        Long userId = participant.getUser().getId();
-        String kakaoAccessToken = participant.getUser().getKakaoAccessToken();
+        User user = participant.getUser();
+        Long userId = user.getId();
+        String kakaoAccessToken = user.getKakaoAccessToken();
 
         if (kakaoAccessToken == null || kakaoAccessToken.isBlank()) {
             log.debug("카카오 액세스 토큰 없음, 메시지 전송 생략: userId={}", userId);
@@ -81,7 +86,18 @@ public class KakaoMessageService {
             default -> templateBuilder.buildSettledMessage(data);
         };
 
-        sendKakaoMessage(kakaoAccessToken, template, userId);
+        try {
+            sendKakaoMessage(kakaoAccessToken, template, userId);
+        } catch (WebClientResponseException.Unauthorized e) {
+            // 액세스 토큰 만료 → 저장된 리프레시 토큰으로 자체 갱신 후 1회 재시도
+            log.info("카카오 액세스 토큰 만료 감지, 자체 갱신 시도: userId={}", userId);
+            String newAccessToken = kakaoOAuthService.refreshKakaoAccessToken(user);
+            if (newAccessToken == null) {
+                log.warn("카카오 토큰 자체 갱신 실패, 메시지 전송 포기: userId={}", userId);
+                return;
+            }
+            sendKakaoMessage(newAccessToken, template, userId);
+        }
     }
 
     private void sendKakaoMessage(String kakaoAccessToken, Map<String, Object> template, Long userId) {
@@ -89,7 +105,7 @@ public class KakaoMessageService {
             String templateJson = objectMapper.writeValueAsString(template);
             String formBody = "template_object=" + java.net.URLEncoder.encode(templateJson, java.nio.charset.StandardCharsets.UTF_8);
 
-            webClientBuilder.build()
+            String response = webClientBuilder.build()
                     .post()
                     .uri(SEND_TO_ME_URL)
                     .header("Authorization", "Bearer " + kakaoAccessToken)
@@ -97,12 +113,16 @@ public class KakaoMessageService {
                     .bodyValue(formBody)
                     .retrieve()
                     .bodyToMono(String.class)
-                    .doOnSuccess(response -> log.info("정산 메시지 전송 성공: userId={}", userId))
-                    .doOnError(e -> log.warn("정산 메시지 전송 실패: userId={}, error={}", userId, e.getMessage()))
-                    .subscribe();
+                    .block();
 
+            log.info("정산 메시지 전송 성공: userId={}, response={}", userId, response);
+
+        } catch (WebClientResponseException e) {
+            log.warn("카카오 API 오류: userId={}, status={}, body={}", userId, e.getStatusCode(), e.getResponseBodyAsString());
+            throw e;
         } catch (JsonProcessingException e) {
             log.error("메시지 템플릿 직렬화 실패: userId={}", userId, e);
+            throw new RuntimeException(e);
         }
     }
 }

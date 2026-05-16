@@ -18,6 +18,9 @@ public class KakaoOAuthProperties {
     private String clientSecret;
     private String redirectUri;
 
+    // 카카오 토큰 발급/갱신 URL
+    private String tokenUri = "https://kauth.kakao.com/oauth/token";
+
     // 카카오 API URL (사용자 정보 조회용)
     private String userInfoUri = "https://kapi.kakao.com/v2/user/me";
 }
