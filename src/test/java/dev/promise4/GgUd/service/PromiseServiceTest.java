@@ -1,5 +1,6 @@
 package dev.promise4.GgUd.service;
 
+import dev.promise4.GgUd.common.exception.BusinessException;
 import dev.promise4.GgUd.controller.dto.*;
 import dev.promise4.GgUd.entity.*;
 import dev.promise4.GgUd.exception.*;
@@ -16,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -200,6 +202,164 @@ class PromiseServiceTest {
             assertThat(response.getDepartureLatitude()).isEqualTo(37.5665);
             assertThat(response.getDepartureLongitude()).isEqualTo(126.9780);
             assertThat(response.isLocationSubmitted()).isTrue();
+        }
+    }
+
+    @Nested
+    @DisplayName("cancelPromise 테스트")
+    class CancelPromiseTest {
+
+        private Promise promise;
+
+        @BeforeEach
+        void setUp() {
+            promise = Promise.builder()
+                    .title("테스트 약속")
+                    .promiseDateTime(LocalDateTime.now().plusDays(1))
+                    .host(testUser)
+                    .build();
+            setPromiseId(promise, 1L);
+            promise.startRecruiting();
+        }
+
+        @Test
+        @DisplayName("호스트가 약속을 취소하면 성공한다")
+        void cancelPromise_byHost_success() {
+            when(promiseRepository.findById(1L)).thenReturn(Optional.of(promise));
+
+            promiseService.cancelPromise(1L, 1L);
+
+            assertThat(promise.getStatus()).isEqualTo(PromiseStatus.CANCELLED);
+        }
+
+        @Test
+        @DisplayName("게스트가 약속 취소 시 403 예외가 발생한다")
+        void cancelPromise_byGuest_throwsBusinessException() {
+            when(promiseRepository.findById(1L)).thenReturn(Optional.of(promise));
+
+            assertThatThrownBy(() -> promiseService.cancelPromise(1L, 999L))
+                    .isInstanceOf(BusinessException.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("completePromise 테스트")
+    class CompletePromiseTest {
+
+        private Promise promise;
+
+        @BeforeEach
+        void setUp() {
+            promise = Promise.builder()
+                    .title("테스트 약속")
+                    .promiseDateTime(LocalDateTime.now().plusDays(1))
+                    .host(testUser)
+                    .build();
+            setPromiseId(promise, 1L);
+            promise.startRecruiting();
+            promise.startSelectingMidpoint();
+            promise.confirmMidpointStation(37.5, 127.0, "강남역");
+            promise.confirmFinalPlace(37.5, 127.0, "스타벅스 강남점");
+            promise.startProgress();
+        }
+
+        @Test
+        @DisplayName("호스트가 약속을 종료하면 성공한다")
+        void completePromise_byHost_success() {
+            when(promiseRepository.findById(1L)).thenReturn(Optional.of(promise));
+
+            promiseService.completePromise(1L, 1L);
+
+            assertThat(promise.getStatus()).isEqualTo(PromiseStatus.COMPLETED);
+        }
+
+        @Test
+        @DisplayName("게스트가 약속 종료 시 403 예외가 발생한다")
+        void completePromise_byGuest_throwsBusinessException() {
+            when(promiseRepository.findById(1L)).thenReturn(Optional.of(promise));
+
+            assertThatThrownBy(() -> promiseService.completePromise(1L, 999L))
+                    .isInstanceOf(BusinessException.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("startSelectingMidpoint 테스트")
+    class StartSelectingMidpointTest {
+
+        private Promise promise;
+
+        @BeforeEach
+        void setUp() {
+            promise = Promise.builder()
+                    .title("테스트 약속")
+                    .promiseDateTime(LocalDateTime.now().plusDays(1))
+                    .host(testUser)
+                    .build();
+            setPromiseId(promise, 1L);
+            promise.startRecruiting();
+        }
+
+        @Test
+        @DisplayName("게스트가 중간지점 선택 시작 시 403 예외가 발생한다")
+        void startSelectingMidpoint_byGuest_throwsBusinessException() {
+            when(promiseRepository.findById(1L)).thenReturn(Optional.of(promise));
+
+            assertThatThrownBy(() -> promiseService.startSelectingMidpoint(1L, 999L))
+                    .isInstanceOf(BusinessException.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("PromiseResponse midpointStationName 테스트")
+    class PromiseResponseMidpointStationNameTest {
+
+        @Test
+        @DisplayName("중간지점 역이 확정된 경우 midpointStationName이 포함된다")
+        void from_withMidpointStation_includesStationName() {
+            Promise promise = Promise.builder()
+                    .title("테스트 약속")
+                    .promiseDateTime(LocalDateTime.now().plusDays(1))
+                    .host(testUser)
+                    .build();
+            promise.startRecruiting();
+            promise.startSelectingMidpoint();
+            promise.confirmMidpointStation(37.5665, 126.9780, "강남역");
+
+            PromiseResponse response = PromiseResponse.from(promise, 3L);
+
+            assertThat(response.getMidpointStationName()).isEqualTo("강남역");
+        }
+
+        @Test
+        @DisplayName("중간지점 역이 미확정이면 midpointStationName이 null이다")
+        void from_withoutMidpointStation_returnsNull() {
+            Promise promise = Promise.builder()
+                    .title("테스트 약속")
+                    .promiseDateTime(LocalDateTime.now().plusDays(1))
+                    .host(testUser)
+                    .build();
+
+            PromiseResponse response = PromiseResponse.from(promise, 1L);
+
+            assertThat(response.getMidpointStationName()).isNull();
+        }
+
+        @Test
+        @DisplayName("상세조회 응답에도 midpointStationName이 포함된다")
+        void from_withParticipants_includesStationName() {
+            Promise promise = Promise.builder()
+                    .title("테스트 약속")
+                    .promiseDateTime(LocalDateTime.now().plusDays(1))
+                    .host(testUser)
+                    .build();
+            promise.startRecruiting();
+            promise.startSelectingMidpoint();
+            promise.confirmMidpointStation(37.5665, 126.9780, "홍대입구역");
+
+            PromiseResponse response = PromiseResponse.from(promise, List.of());
+
+            assertThat(response.getMidpointStationName()).isEqualTo("홍대입구역");
         }
     }
 

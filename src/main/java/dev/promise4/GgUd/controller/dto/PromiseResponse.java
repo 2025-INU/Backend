@@ -67,6 +67,9 @@ public class PromiseResponse {
     @Schema(description = "확정 장소명")
     private String confirmedPlaceName;
 
+    @Schema(description = "확정된 중간지점 역 이름")
+    private String midpointStationName;
+
     @Schema(description = "생성 일시")
     private LocalDateTime createdAt;
 
@@ -94,6 +97,7 @@ public class PromiseResponse {
                 .confirmedLatitude(promise.getConfirmedLatitude())
                 .confirmedLongitude(promise.getConfirmedLongitude())
                 .confirmedPlaceName(promise.getConfirmedPlaceName())
+                .midpointStationName(promise.getMidpointStationName())
                 .createdAt(promise.getCreatedAt())
                 .build();
     }
@@ -118,6 +122,7 @@ public class PromiseResponse {
                 .confirmedLatitude(promise.getConfirmedLatitude())
                 .confirmedLongitude(promise.getConfirmedLongitude())
                 .confirmedPlaceName(promise.getConfirmedPlaceName())
+                .midpointStationName(promise.getMidpointStationName())
                 .createdAt(promise.getCreatedAt())
                 .participants(participantResponses)
                 .build();
