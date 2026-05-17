@@ -157,7 +157,7 @@ public class PromiseService {
                 .orElseThrow(() -> new IllegalArgumentException("약속을 찾을 수 없습니다"));
 
         if (!promise.getHost().getId().equals(userId)) {
-            return;
+            throw new BusinessException(ErrorCode.HANDLE_ACCESS_DENIED);
         }
 
         if (promise.getStatus() != PromiseStatus.RECRUITING) {
@@ -249,7 +249,7 @@ public class PromiseService {
                 .orElseThrow(() -> new IllegalArgumentException("약속을 찾을 수 없습니다"));
 
         if (!promise.getHost().getId().equals(userId)) {
-            return;
+            throw new BusinessException(ErrorCode.HANDLE_ACCESS_DENIED);
         }
 
         promise.cancel();
@@ -267,7 +267,7 @@ public class PromiseService {
                 .orElseThrow(() -> new IllegalArgumentException("약속을 찾을 수 없습니다"));
 
         if (!promise.getHost().getId().equals(userId)) {
-            return;
+            throw new BusinessException(ErrorCode.HANDLE_ACCESS_DENIED);
         }
 
         if (promise.getStatus() != PromiseStatus.IN_PROGRESS) {
