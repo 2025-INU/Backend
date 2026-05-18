@@ -125,6 +125,7 @@ public class PlaceRecommendationService {
 
         response.setPromiseId(promiseId);
         response.setHost(isHost);
+        applyDistanceScoreFallback(response.getRecommendations());
         List<PlaceRecommendationItem> filtered = sortAndLimit(response.getRecommendations(), limit);
         response.setRecommendations(filtered);
 
@@ -156,6 +157,17 @@ public class PlaceRecommendationService {
         }
         userHistoryService.savePlaceHistory(userId, placeId, queryId);
         log.debug("Place selection recorded: promiseId={}, userId={}, placeId={}", promiseId, userId, placeId);
+    }
+
+    private void applyDistanceScoreFallback(List<PlaceRecommendationItem> items) {
+        if (items == null) return;
+        for (PlaceRecommendationItem item : items) {
+            if (item.getAiScore() == null || item.getAiScore() == 0.0) {
+                double distance = item.getDistanceFromMidpoint() != null ? item.getDistanceFromMidpoint() : 0.0;
+                double score = Math.max(1.0, 100.0 - (distance * 10.0));
+                item.setAiScore(score);
+            }
+        }
     }
 
     private List<PlaceRecommendationItem> sortAndLimit(
