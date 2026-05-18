@@ -60,7 +60,9 @@ public class PlaceRecommendationService {
                                 Comparator.nullsLast(Double::compareTo)
                         ))
                         .toList();
-                return new PlaceRecommendationResponse(promiseId, items, isHost);
+                PlaceRecommendationResponse cachedResponse = new PlaceRecommendationResponse(promiseId, items, isHost, null);
+                cachedResponse.setMidpointStationName(promise.getMidpointStationName());
+                return cachedResponse;
             }
         } else {
             log.debug("cache bypassed for promiseId={}, hasQuery={}, tab={}", promiseId, hasQuery, tab);
@@ -86,11 +88,12 @@ public class PlaceRecommendationService {
         PlaceRecommendationResponse response = mono.block();
         if (response == null) {
             log.warn("AI 서버로부터 null 응답 수신, 빈 추천 결과 반환");
-            return new PlaceRecommendationResponse(promiseId, java.util.List.of(), isHost);
+            return new PlaceRecommendationResponse(promiseId, java.util.List.of(), isHost, null);
         }
 
         response.setPromiseId(promiseId);
         response.setHost(isHost);
+        response.setMidpointStationName(promise.getMidpointStationName());
         List<PlaceRecommendationItem> filtered = sortAndLimit(response.getRecommendations(), limit);
         response.setRecommendations(filtered);
 
