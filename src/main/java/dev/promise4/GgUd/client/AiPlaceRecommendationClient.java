@@ -53,7 +53,7 @@ public class AiPlaceRecommendationClient {
                                 ex.getStatusCode(), ex.getResponseBodyAsString()))
                 .onErrorResume(e -> {
                     log.warn("AI 서버 호출 실패, 빈 결과 반환: {}", e.getMessage());
-                    return Mono.just(new PlaceRecommendationResponse(promiseId, java.util.List.of(), false));
+                    return Mono.just(new PlaceRecommendationResponse(promiseId, java.util.List.of(), false, null));
                 });
     }
 }

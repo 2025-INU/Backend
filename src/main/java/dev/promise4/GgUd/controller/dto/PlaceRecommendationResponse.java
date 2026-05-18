@@ -28,4 +28,7 @@ public class PlaceRecommendationResponse {
 
     @Schema(description = "현재 사용자가 호스트 여부", example = "true")
     private boolean host;
+
+    @Schema(description = "확정된 중간지점 역 이름")
+    private String midpointStationName;
 }
