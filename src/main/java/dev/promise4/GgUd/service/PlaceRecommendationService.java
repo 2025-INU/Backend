@@ -85,7 +85,7 @@ public class PlaceRecommendationService {
         int limit = DEFAULT_RECOMMENDATION_LIMIT;
         String query = (request.getQuery() != null && !request.getQuery().isBlank())
                 ? request.getQuery()
-                : "주변 추천 장소";
+                : "";
 
         // 쿼리 입력 시 히스토리 저장
         if (!query.isBlank()) {
