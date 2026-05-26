@@ -95,9 +95,13 @@ public class SettlementMessageTemplateBuilder {
         Map<String, Object> template = new LinkedHashMap<>();
         template.put("object_type", "list");
         template.put("header_title", headerTitle);
-        template.put("header_link", new HashMap<>());
-        // 카카오 리스트 메시지 최대 5개 항목
-        template.put("contents", contents.size() > 5 ? contents.subList(0, 5) : contents);
+        // 카카오 link 오브젝트: web_url 또는 mobile_web_url 중 최소 하나 필요
+        Map<String, Object> headerLink = new LinkedHashMap<>();
+        headerLink.put("web_url", "https://www.kakaocorp.com");
+        headerLink.put("mobile_web_url", "https://www.kakaocorp.com");
+        template.put("header_link", headerLink);
+        // 카카오 리스트 메시지 최대 3개 항목
+        template.put("contents", contents.size() > 3 ? contents.subList(0, 3) : contents);
         return template;
     }
 
@@ -105,7 +109,10 @@ public class SettlementMessageTemplateBuilder {
         Map<String, Object> content = new LinkedHashMap<>();
         content.put("title", title);
         content.put("description", description);
-        content.put("link", new HashMap<>());
+        Map<String, Object> link = new LinkedHashMap<>();
+        link.put("web_url", "https://www.kakaocorp.com");
+        link.put("mobile_web_url", "https://www.kakaocorp.com");
+        content.put("link", link);
         return content;
     }
 

@@ -25,7 +25,11 @@ public class SubwayStationDataLoader implements ApplicationRunner {
 
     private final SubwayStationRepository subwayStationRepository;
 
-    // isIncheon=true면 호선명 그대로 사용(IN_1, IN_2), false면 "N호선" 형식으로 변환
+    private static final java.util.Map<String, String> INCHEON_LINE_NAME_MAP = java.util.Map.of(
+            "IN_1", "인천1호선",
+            "IN_2", "인천2호선"
+    );
+
     private List<SubwayStation> loadFromCsv(String path, boolean isIncheon) throws Exception {
         ClassPathResource resource = new ClassPathResource(path);
         List<SubwayStation> stations = new ArrayList<>();
@@ -45,7 +49,9 @@ public class SubwayStationDataLoader implements ApplicationRunner {
                 try {
                     String stationName = fields[3].trim();
                     String rawLine = fields[1].trim();
-                    String lineName = isIncheon ? rawLine : rawLine + "호선";
+                    String lineName = isIncheon
+                            ? INCHEON_LINE_NAME_MAP.getOrDefault(rawLine, rawLine)
+                            : rawLine + "호선";
                     double latitude = Double.parseDouble(fields[4].trim());
                     double longitude = Double.parseDouble(fields[5].trim());
 
@@ -76,7 +82,7 @@ public class SubwayStationDataLoader implements ApplicationRunner {
             log.info("Seoul subway data already loaded. Skipping...");
         }
 
-        if (subwayStationRepository.findByLineName("IN_1").isEmpty()) {
+        if (subwayStationRepository.findByLineName("인천1호선").isEmpty()) {
             toSave.addAll(loadFromCsv("data/incheon_subway_stations.csv", true));
         } else {
             log.info("Incheon subway data already loaded. Skipping...");
