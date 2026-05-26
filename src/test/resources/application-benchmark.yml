@@ -1,0 +1,92 @@
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  cache:
+    type: redis
+  datasource:
+    url: jdbc:postgresql://localhost:5433/ggud_db
+    username: ggud_user
+    password: ggud_db_pw
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_batch_fetch_size: 100
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password:
+      timeout: 5000ms
+  security:
+    oauth2:
+      client:
+        registration:
+          kakao:
+            client-id: test
+            client-secret: test
+            redirect-uri: http://localhost:8080/login/oauth2/code/kakao
+            authorization-grant-type: authorization_code
+            scope: profile_nickname, account_email
+            client-name: Kakao
+        provider:
+          kakao:
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-name-attribute: id
+
+jwt:
+  secret: 9c1071ad0ea81222e792cf676e36c0f1aaaabbbbcccc
+  access-token-expiration: 3600000
+  refresh-token-expiration: 604800000
+
+kakao:
+  client-id: test
+  client-secret: test
+  redirect-uri: http://localhost:8080
+  authorization-uri: https://kauth.kakao.com/oauth/authorize
+  token-uri: https://kauth.kakao.com/oauth/token
+  user-info-uri: https://kapi.kakao.com/v2/user/me
+  api:
+    rest-api-key: test
+    javascript-key: test
+
+tmap:
+  api:
+    app-key: mHm9GXiohQ5MKRCB70e3i837qBG0Ph5k1Xal9LQK
+    base-url: https://apis.openapi.sk.com
+    connect-timeout: 5000
+    read-timeout: 10000
+
+app:
+  ai:
+    server-url: http://localhost:8000
+  meeting:
+    max-participants: 10
+    invite-expiration-hours: 24
+    location-sharing-start-minutes: 5
+  cors:
+    allowed-origins: http://localhost:3000
+    allowed-methods: GET,POST,PUT,DELETE,PATCH,OPTIONS
+    allowed-headers: "*"
+    allow-credentials: true
+
+cloud:
+  aws:
+    credentials:
+      access-key: test
+      secret-key: test
+    region:
+      static: ap-northeast-2
+    s3:
+      bucket: test-bucket
+
+logging:
+  level:
+    dev.promise4.GgUd: WARN
+    root: WARN
