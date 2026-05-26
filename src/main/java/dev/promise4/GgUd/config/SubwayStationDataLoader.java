@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -69,19 +68,23 @@ public class SubwayStationDataLoader implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) throws Exception {
-        // 이미 데이터가 있으면 스킵
-        if (subwayStationRepository.count() > 0) {
-            log.info("Subway station data already loaded. Skipping...");
-            return;
+        List<SubwayStation> toSave = new ArrayList<>();
+
+        if (subwayStationRepository.findByLineName("1호선").isEmpty()) {
+            toSave.addAll(loadFromCsv("data/seoul_subway_stations.csv", false));
+        } else {
+            log.info("Seoul subway data already loaded. Skipping...");
         }
 
-        log.info("Loading subway station data from CSV...");
+        if (subwayStationRepository.findByLineName("IN_1").isEmpty()) {
+            toSave.addAll(loadFromCsv("data/incheon_subway_stations.csv", true));
+        } else {
+            log.info("Incheon subway data already loaded. Skipping...");
+        }
 
-        List<SubwayStation> stations = new ArrayList<>();
-        stations.addAll(loadFromCsv("data/seoul_subway_stations.csv", false));
-        stations.addAll(loadFromCsv("data/incheon_subway_stations.csv", true));
-
-        subwayStationRepository.saveAll(stations);
-        log.info("Loaded {} subway stations", stations.size());
+        if (!toSave.isEmpty()) {
+            subwayStationRepository.saveAll(toSave);
+            log.info("Loaded {} subway stations", toSave.size());
+        }
     }
 }
