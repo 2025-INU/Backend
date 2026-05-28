@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,7 +25,11 @@ public class SubwayStationDataLoader implements ApplicationRunner {
 
     private final SubwayStationRepository subwayStationRepository;
 
-    // isIncheon=true면 호선명 그대로 사용(IN_1, IN_2), false면 "N호선" 형식으로 변환
+    private static final java.util.Map<String, String> INCHEON_LINE_NAME_MAP = java.util.Map.of(
+            "IN_1", "인천1호선",
+            "IN_2", "인천2호선"
+    );
+
     private List<SubwayStation> loadFromCsv(String path, boolean isIncheon) throws Exception {
         ClassPathResource resource = new ClassPathResource(path);
         List<SubwayStation> stations = new ArrayList<>();
@@ -46,7 +49,9 @@ public class SubwayStationDataLoader implements ApplicationRunner {
                 try {
                     String stationName = fields[3].trim();
                     String rawLine = fields[1].trim();
-                    String lineName = isIncheon ? rawLine : rawLine + "호선";
+                    String lineName = isIncheon
+                            ? INCHEON_LINE_NAME_MAP.getOrDefault(rawLine, rawLine)
+                            : rawLine + "호선";
                     double latitude = Double.parseDouble(fields[4].trim());
                     double longitude = Double.parseDouble(fields[5].trim());
 
@@ -69,19 +74,23 @@ public class SubwayStationDataLoader implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) throws Exception {
-        // 이미 데이터가 있으면 스킵
-        if (subwayStationRepository.count() > 0) {
-            log.info("Subway station data already loaded. Skipping...");
-            return;
+        List<SubwayStation> toSave = new ArrayList<>();
+
+        if (subwayStationRepository.findByLineName("1호선").isEmpty()) {
+            toSave.addAll(loadFromCsv("data/seoul_subway_stations.csv", false));
+        } else {
+            log.info("Seoul subway data already loaded. Skipping...");
         }
 
-        log.info("Loading subway station data from CSV...");
+        if (subwayStationRepository.findByLineName("인천1호선").isEmpty()) {
+            toSave.addAll(loadFromCsv("data/incheon_subway_stations.csv", true));
+        } else {
+            log.info("Incheon subway data already loaded. Skipping...");
+        }
 
-        List<SubwayStation> stations = new ArrayList<>();
-        stations.addAll(loadFromCsv("data/seoul_subway_stations.csv", false));
-        stations.addAll(loadFromCsv("data/incheon_subway_stations.csv", true));
-
-        subwayStationRepository.saveAll(stations);
-        log.info("Loaded {} subway stations", stations.size());
+        if (!toSave.isEmpty()) {
+            subwayStationRepository.saveAll(toSave);
+            log.info("Loaded {} subway stations", toSave.size());
+        }
     }
 }

@@ -147,7 +147,7 @@ public class MidpointService {
                 .orElseThrow(() -> new IllegalArgumentException("약속을 찾을 수 없습니다"));
 
         if (!promise.getHost().getId().equals(userId)) {
-            return;
+            throw new BusinessException(ErrorCode.HANDLE_ACCESS_DENIED);
         }
 
         if (promise.getStatus() != PromiseStatus.SELECTING_MIDPOINT) {
@@ -173,7 +173,7 @@ public class MidpointService {
                 .orElseThrow(() -> new IllegalArgumentException("약속을 찾을 수 없습니다"));
 
         if (!promise.getHost().getId().equals(userId)) {
-            return;
+            throw new BusinessException(ErrorCode.HANDLE_ACCESS_DENIED);
         }
 
         promise.resetMidpoint();
@@ -192,7 +192,7 @@ public class MidpointService {
                 .orElseThrow(() -> new IllegalArgumentException("약속을 찾을 수 없습니다"));
 
         if (!promise.getHost().getId().equals(userId)) {
-            return;
+            throw new BusinessException(ErrorCode.HANDLE_ACCESS_DENIED);
         }
 
         promise.confirmFinalPlace(request.getLatitude(), request.getLongitude(), request.getPlaceName());
