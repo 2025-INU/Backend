@@ -68,6 +68,7 @@ public class PlaceRecommendationService {
             var cached = aiPlaceRecommendationsRepository.findByPromiseIdOrderByRankingAsc(promiseId);
             if (!cached.isEmpty()) {
                 log.debug("Found {} cached AI place recommendations for promiseId={}", cached.size(), promiseId);
+                // 캐시 경로는 쿼리 없는 케이스(!hasQuery && tab==ALL)에서만 진입 → 거리순 유지
                 var items = cached.stream()
                         .map(this::toDto)
                         .sorted(Comparator.comparing(
@@ -125,7 +126,7 @@ public class PlaceRecommendationService {
 
         response.setPromiseId(promiseId);
         response.setHost(isHost);
-        List<PlaceRecommendationItem> filtered = sortAndLimit(response.getRecommendations(), limit);
+        List<PlaceRecommendationItem> filtered = sortAndLimit(response.getRecommendations(), limit, hasQuery);
         response.setRecommendations(filtered);
 
         // 2. 기본 탭 + 기본 추천(쿼리 미입력)일 때만 캐싱
@@ -160,16 +161,32 @@ public class PlaceRecommendationService {
 
     private List<PlaceRecommendationItem> sortAndLimit(
             List<PlaceRecommendationItem> items,
-            int limit
+            int limit,
+            boolean hasQuery
     ) {
         if (items == null || items.isEmpty()) {
             return List.of();
         }
+        Comparator<PlaceRecommendationItem> byDistanceAsc = Comparator.comparing(
+                PlaceRecommendationItem::getDistanceFromMidpoint,
+                Comparator.nullsLast(Double::compareTo)
+        );
+
+        Comparator<PlaceRecommendationItem> primary;
+        if (hasQuery) {
+            // 쿼리 있음: AI 점수 내림차순 → 동률이면 거리 가까운 순
+            Comparator<PlaceRecommendationItem> byScoreDesc = Comparator.comparing(
+                    PlaceRecommendationItem::getAiScore,
+                    Comparator.nullsLast(Comparator.<Double>reverseOrder())
+            );
+            primary = byScoreDesc.thenComparing(byDistanceAsc);
+        } else {
+            // 쿼리 없음: 거리 가까운 순
+            primary = byDistanceAsc;
+        }
+
         return items.stream()
-                .sorted(Comparator.comparing(
-                        PlaceRecommendationItem::getDistanceFromMidpoint,
-                        Comparator.nullsLast(Double::compareTo)
-                ))
+                .sorted(primary)
                 .limit(limit)
                 .toList();
     }
