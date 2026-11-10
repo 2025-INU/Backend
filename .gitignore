@@ -56,6 +56,9 @@ logs/
 docs/*
 !docs/images/
 
+# Docker 로컬 볼륨 데이터 (PostgreSQL · Redis)
+.data/
+
 # SSL 인증서
 *.pem
 *.key
