@@ -52,8 +52,9 @@ logs/
 .DS_Store
 **/.DS_Store
 
-# Docs (local only)
-docs/
+# Docs (local only) — README 이미지만 공개
+docs/*
+!docs/images/
 
 # SSL 인증서
 *.pem
